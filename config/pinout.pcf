@@ -1,0 +1,13 @@
+# VGA_Pong pin mappings
+
+set_io CLK_100 46
+
+set_io VGA_OUT[0] 43
+set_io VGA_OUT[1] 38
+set_io VGA_OUT[2] 42
+set_io VGA_HS 36
+set_io VGA_VS 37
+
+set_io leds[0] 39
+set_io leds[1] 40
+set_io leds[2] 41
