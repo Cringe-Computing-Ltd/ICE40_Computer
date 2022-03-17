@@ -240,8 +240,8 @@ begin
                             next_bitmap <= "00000000";
                         end if;
                         
-                        char_background <= "111";
-                        char_foreground <= "";
+                        char_background <= "000";
+                        char_foreground <= "111";
     
                     when "111" =>
                         bitmap <= next_bitmap;
