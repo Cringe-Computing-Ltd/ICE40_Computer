@@ -102,7 +102,7 @@ begin
     CLK_25_175_OUT <= CLK_25_175;
 
     process(CLK_25_175)
-        variable char_stride : std_logic_vector(13 downto 0);
+        variable vram_stride : std_logic_vector(13 downto 0);
 
         variable text_x : std_logic_vector(6 downto 0);
         variable text_y : std_logic_vector(6 downto 0);
@@ -110,6 +110,7 @@ begin
         variable char_y : std_logic_vector(2 downto 0);
 
         variable char_code : std_logic_vector(7 downto 0);
+        variable cram_stride : std_logic_vector(11 downto 0);
 
     begin
         if(rising_edge(CLK_25_175)) then
@@ -162,89 +163,34 @@ begin
                         if((text_x = 79) and (cursor_y = 479)) then
                             VRAM_addr <= "0000000000000";
                             next_char_y <= "000";
-                            next_text_x_temp_do_not_use <= "0000000";
                         --Bottom of Last character of a line
                         elsif((text_x = 79) and (char_y = 7)) then
-                            char_stride := "1010000"*(text_y+1); -- 80 * (text_y+1)
-                            VRAM_addr <= char_stride(12 downto 0);
+                            vram_stride := "1010000"*(text_y+1); -- 80 * (text_y+1)
+                            VRAM_addr <= vram_stride(12 downto 0);
                             next_char_y <= "000";
-                            next_text_x_temp_do_not_use <= "0000000";
                         --Last character
                         elsif (text_x = 79) then
-                            char_stride := "1010000"*text_y; -- 80 * text_y
-                            VRAM_addr <= char_stride(12 downto 0);
+                            vram_stride := "1010000"*text_y; -- 80 * text_y
+                            VRAM_addr <= vram_stride(12 downto 0);
                             next_char_y <= char_y + 1;
-                            next_text_x_temp_do_not_use <= "0000000";
                         else
-                            char_stride := "1010000"*text_y; -- 80 * text_y
-                            VRAM_addr <= char_stride(12 downto 0) + (text_x+1);
+                            vram_stride := "1010000"*text_y; -- 80 * text_y
+                            VRAM_addr <= vram_stride(12 downto 0) + (text_x+1);
                             next_char_y <= char_y;
-                            next_text_x_temp_do_not_use <= text_x + 1;
                         end if;
-                    when "001" => null;
-                    when "010" => 
+                    when "010" =>
+                        -- Decode VRAM output
                         char_code := VRAM_data(7 downto 0);
                         char_foreground <= VRAM_data(10 downto 8);
                         char_background <= VRAM_data(13 downto 11);
-                        -- CRAM_addr <= char_code*"1000"+next_char_y;
-    
-                        if (next_text_x_temp_do_not_use = "0000000") then
-                            case next_char_y is
-                                when "000" => next_bitmap <= X"07";
-                                when "001" => next_bitmap <= X"06";
-                                when "010" => next_bitmap <= X"06";
-                                when "011" => next_bitmap <= X"3E";
-                                when "100" => next_bitmap <= X"66";
-                                when "101" => next_bitmap <= X"66";
-                                when "110" => next_bitmap <= X"3B";
-                                when "111" => next_bitmap <= X"00";
-                                when others => null;
-                            end case;
-                        elsif (next_text_x_temp_do_not_use = "0000001") then
-                            case next_char_y is
-                                when "000" => next_bitmap <= X"00";
-                                when "001" => next_bitmap <= X"00";
-                                when "010" => next_bitmap <= X"3B";
-                                when "011" => next_bitmap <= X"6E";
-                                when "100" => next_bitmap <= X"66";
-                                when "101" => next_bitmap <= X"06";
-                                when "110" => next_bitmap <= X"0F";
-                                when "111" => next_bitmap <= X"00";
-                                when others => null;
-                            end case;
-                        elsif (next_text_x_temp_do_not_use = "0000010") then
-                            case next_char_y is
-                                when "000" => next_bitmap <= X"00";
-                                when "001" => next_bitmap <= X"00";
-                                when "010" => next_bitmap <= X"33";
-                                when "011" => next_bitmap <= X"33";
-                                when "100" => next_bitmap <= X"33";
-                                when "101" => next_bitmap <= X"33";
-                                when "110" => next_bitmap <= X"6E";
-                                when "111" => next_bitmap <= X"00";
-                                when others => null;
-                            end case;
-                        elsif (next_text_x_temp_do_not_use = "0000011") then
-                            case next_char_y is
-                                when "000" => next_bitmap <= X"07";
-                                when "001" => next_bitmap <= X"06";
-                                when "010" => next_bitmap <= X"36";
-                                when "011" => next_bitmap <= X"6E";
-                                when "100" => next_bitmap <= X"66";
-                                when "101" => next_bitmap <= X"66";
-                                when "110" => next_bitmap <= X"67";
-                                when "111" => next_bitmap <= X"00";
-                                when others => null;
-                            end case;
-                        else
-                            next_bitmap <= "00000000";
-                        end if;
                         
-                        char_background <= "000";
-                        char_foreground <= "111";
+                        -- Load CRAM address
+                        cram_stride := char_code * X"8";
+                        CRAM_addr <= cram_stride(10 downto 0) + next_char_y;
     
                     when "111" =>
-                        bitmap <= next_bitmap;
+                        -- Update display registers
+                        bitmap <= CRAM_data(7 downto 0);
                         foreground <= char_foreground;
                         background <= char_background;
 
