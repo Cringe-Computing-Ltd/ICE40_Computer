@@ -24,7 +24,7 @@ entity VGA_GEN is port(
     -- CRAM write port
     CRAM_W_CLK      : in    std_logic;
     CRAM_W_E        : in    std_logic;
-    CRAM_W_ADDR     : in    std_logic_vector(10 downto 0);
+    CRAM_W_ADDR     : in    std_logic_vector(9 downto 0);
     CRAM_W_DATA     : in    std_logic_vector(15 downto 0)
 );
 end entity;
@@ -57,12 +57,12 @@ architecture behavior of VGA_GEN is
         -- Read port
         r_clk	: in	std_logic;
         r_addr	: in	std_logic_vector(10 downto 0);
-        r_data	: out	std_logic_vector(15 downto 0);
+        r_data	: out	std_logic_vector(7 downto 0);
 
         --  Write port
         w_clk	: in	std_logic;
         w_e  	: in	std_logic;
-        w_addr	: in	std_logic_vector(10 downto 0);
+        w_addr	: in	std_logic_vector(9 downto 0);
         w_data	: in	std_logic_vector(15 downto 0)
     ); 
     end component;
@@ -75,11 +75,11 @@ architecture behavior of VGA_GEN is
     signal cursor_y : std_logic_vector(9 downto 0) := "0000000000";
 
     -- Character line bitmap
-    signal bitmap : std_logic_vector(7 downto 0) := "00001111";
+    signal bitmap : std_logic_vector(7 downto 0) := X"00";
 
     -- Foreground and background color
-    signal foreground : std_logic_vector(2 downto 0) := "011";
-    signal background : std_logic_vector(2 downto 0) := "100";
+    signal foreground : std_logic_vector(2 downto 0) := "000";
+    signal background : std_logic_vector(2 downto 0) := "000";
 
     -- VRAM Signals
     signal VRAM_addr : std_logic_vector(12 downto 0) := "0000000000000";
@@ -87,14 +87,14 @@ architecture behavior of VGA_GEN is
 
     -- CRAM Signals
     signal CRAM_addr : std_logic_vector(10 downto 0);
-    signal CRAM_data : std_logic_vector(15 downto 0);
+    signal CRAM_data : std_logic_vector(7 downto 0);
 
     -- Bitmap to be loaded intro work bitmap
-    signal next_bitmap : std_logic_vector(7 downto 0) := "00000000";
+    signal next_bitmap : std_logic_vector(7 downto 0) := X"00";
 
     -- Foreground and background colors to be loaded in work registers
-    signal next_foreground : std_logic_vector(2 downto 0) := "011";
-    signal next_background : std_logic_vector(2 downto 0) := "100";
+    signal next_foreground : std_logic_vector(2 downto 0) := "000";
+    signal next_background : std_logic_vector(2 downto 0) := "000";
 
     -- Bitmap line vertical offset of the next character
     signal next_char_y : std_logic_vector(2 downto 0);
@@ -226,7 +226,7 @@ begin
                         -- Decode VRAM output
                         char_code := VRAM_data(7 downto 0);
                         next_foreground <= VRAM_data(10 downto 8);
-                        next_background <= VRAM_data(13 downto 11);
+                        next_background <= VRAM_data(14 downto 12);
                         
                         -- Load CRAM address
                         cram_stride := char_code * X"8";
@@ -235,7 +235,7 @@ begin
                     -- STEP 3: Update work registers with staging registers and CRAM output
                     when "111" =>
                         -- Update display registers
-                        bitmap <= CRAM_data(7 downto 0);
+                        bitmap <= CRAM_data;
                         foreground <= next_foreground;
                         background <= next_background;
 

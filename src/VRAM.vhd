@@ -101,25 +101,25 @@ begin
                     X"0000";
 
     -- Multiplex WE
-    bram_wes <= "0000000000000000001" when (r_addr(12 downto 8) = "00000") else
-                "0000000000000000010" when (r_addr(12 downto 8) = "00001") else
-                "0000000000000000100" when (r_addr(12 downto 8) = "00010") else
-                "0000000000000001000" when (r_addr(12 downto 8) = "00011") else
-                "0000000000000010000" when (r_addr(12 downto 8) = "00100") else
-                "0000000000000100000" when (r_addr(12 downto 8) = "00101") else
-                "0000000000001000000" when (r_addr(12 downto 8) = "00110") else
-                "0000000000010000000" when (r_addr(12 downto 8) = "00111") else
-                "0000000000100000000" when (r_addr(12 downto 8) = "01000") else
-                "0000000001000000000" when (r_addr(12 downto 8) = "01001") else
-                "0000000010000000000" when (r_addr(12 downto 8) = "01010") else
-                "0000000100000000000" when (r_addr(12 downto 8) = "01011") else
-                "0000001000000000000" when (r_addr(12 downto 8) = "01100") else
-                "0000010000000000000" when (r_addr(12 downto 8) = "01101") else
-                "0000100000000000000" when (r_addr(12 downto 8) = "01110") else
-                "0001000000000000000" when (r_addr(12 downto 8) = "01111") else
-                "0010000000000000000" when (r_addr(12 downto 8) = "10000") else
-                "0100000000000000000" when (r_addr(12 downto 8) = "10001") else
-                "1000000000000000000" when (r_addr(12 downto 8) = "10010") else
+    bram_wes <= "0000000000000000001" when (w_addr(12 downto 8) = "00000") else
+                "0000000000000000010" when (w_addr(12 downto 8) = "00001") else
+                "0000000000000000100" when (w_addr(12 downto 8) = "00010") else
+                "0000000000000001000" when (w_addr(12 downto 8) = "00011") else
+                "0000000000000010000" when (w_addr(12 downto 8) = "00100") else
+                "0000000000000100000" when (w_addr(12 downto 8) = "00101") else
+                "0000000000001000000" when (w_addr(12 downto 8) = "00110") else
+                "0000000000010000000" when (w_addr(12 downto 8) = "00111") else
+                "0000000000100000000" when (w_addr(12 downto 8) = "01000") else
+                "0000000001000000000" when (w_addr(12 downto 8) = "01001") else
+                "0000000010000000000" when (w_addr(12 downto 8) = "01010") else
+                "0000000100000000000" when (w_addr(12 downto 8) = "01011") else
+                "0000001000000000000" when (w_addr(12 downto 8) = "01100") else
+                "0000010000000000000" when (w_addr(12 downto 8) = "01101") else
+                "0000100000000000000" when (w_addr(12 downto 8) = "01110") else
+                "0001000000000000000" when (w_addr(12 downto 8) = "01111") else
+                "0010000000000000000" when (w_addr(12 downto 8) = "10000") else
+                "0100000000000000000" when (w_addr(12 downto 8) = "10001") else
+                "1000000000000000000" when (w_addr(12 downto 8) = "10010") else
                 "0000000000000000000";
 
 end architecture behavior;
