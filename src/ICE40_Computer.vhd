@@ -94,10 +94,13 @@ begin
     --     leds <= NOT cnt(25 downto 23); 
     -- end process;
 
+    leds <= "110" when (cnt(24 downto 23) = "00") else
+            "101" when (cnt(24 downto 23) = "01") else
+            "011" when (cnt(24 downto 23) = "10") else
+            "101";
+
     process(CLK_25_175)
     begin
-
-        leds <= NOT cnt(25 downto 23); 
 
         if(rising_edge(CLK_25_175)) then
         
