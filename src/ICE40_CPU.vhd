@@ -15,25 +15,25 @@ end entity;
 
 architecture mannerisms of ICE40_CPU is
     type EXEC_STATES is (FETCH, IDLE, EXEC, CONTD);
-    type REGS_T is array (31 downto 0) of std_logic_vector(15 downto 0);
+    type REGS_T is array (7 downto 0) of std_logic_vector(15 downto 0);
     signal ip : std_logic_vector(15 downto 0) := "0000000000000000";
     signal state : EXEC_STATES := FETCH;
-    signal state_after_idle : EXEC_STATES;
+    signal state_after_idle : EXEC_STATES := FETCH;
     
-    signal opcode_longlive : std_logic_vector(5 downto 0);
-    signal dst_longlive : std_logic_vector(4 downto 0);
-    signal src_longlive : std_logic_vector (4 downto 0);
-    signal dst_content_longlive : std_logic_vector(15 downto 0);
-    signal src_content_longlive : std_logic_vector(15 downto 0);
+    signal opcode_longlive : std_logic_vector(5 downto 0) := "000000";
+    signal dst_longlive : std_logic_vector(4 downto 0) := "00000";
+    signal src_longlive : std_logic_vector (4 downto 0) := "00000";
+    signal dst_content_longlive : std_logic_vector(15 downto 0) := "0000000000000000";
+    signal src_content_longlive : std_logic_vector(15 downto 0) := "0000000000000000";
 
     -- [zf, sf, cf, Pizza]
     signal flags : std_logic_vector(3 downto 0) := "0000";
 
 
-    signal regs : REGS_T;
+    signal regs : REGS_T := (others => "0000000000000000");
 
 
-    signal multmp : std_logic_vector(31 downto 0);
+    signal multmp : std_logic_vector(31 downto 0) := X"00000000";
 
 begin
     -- insert mem things
@@ -47,11 +47,11 @@ begin
         variable dst_content : std_logic_vector(15 downto 0);
         variable src_content : std_logic_vector(15 downto 0);
 
-        variable tmp_content : std_logic_vector(15 downto 0) := "0000000000000000";
-        variable jmp_cond_ok : std_logic := '0';
+        variable tmp_content : std_logic_vector(15 downto 0);
+        variable jmp_cond_ok : std_logic;
 
         -- TODO: get rid of this, probably unneeded.
-        variable reload : std_logic := '0';
+        variable reload : std_logic;
     begin
         if(rising_edge(CLK)) then
             case state is
@@ -124,7 +124,7 @@ begin
 
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                             -- END add
                         
@@ -140,7 +140,7 @@ begin
                             
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                             -- END sub
                         
@@ -220,7 +220,7 @@ begin
 
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                             -- END xchg
                         
@@ -230,7 +230,7 @@ begin
 
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                             -- END xor
                         
@@ -240,7 +240,7 @@ begin
 
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                             -- 
                         
@@ -250,7 +250,7 @@ begin
 
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
 
                         -- cmp: compares dst and src
@@ -287,7 +287,7 @@ begin
                             dst_content := std_logic_vector(shift_left(unsigned(dst_content), to_integer(unsigned(src_content))));
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
 
                         -- shr: shift right
@@ -295,7 +295,7 @@ begin
                             dst_content := std_logic_vector(shift_right(unsigned(dst_content), to_integer(unsigned(src_content))));
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                         
                         -- mov: move src into dst
@@ -305,7 +305,7 @@ begin
                             dst_content := src_content;
 
                             ip <= ip + 1;
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
 
                         -- inc: increment dst
@@ -319,7 +319,7 @@ begin
                             flags(2) <= carrier_tmp(16);
 
                             ip <= ip + 1;
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                         
                         -- dec: decrement dst
@@ -333,13 +333,13 @@ begin
                             flags(2) <= carrier_tmp(16);
 
                             ip <= ip + 1;
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
 
                         -- pshi: push immediate
                         when "010010" =>
                             MEM_ADDR <= ip + 1;
-                            regs(31) <= regs(31) - 1;
+                            regs(7) <= regs(7) - 1;
 
                             state_after_idle <= CONTD;
                             state <= IDLE;
@@ -347,12 +347,12 @@ begin
                         -- psh: push dst
                         when "010011" =>
                             -- write dst_content into [rsp - 1]
-                            MEM_ADDR <= regs(31) - 1;
+                            MEM_ADDR <= regs(7) - 1;
                             MEM_IN <= dst_content;
                             MEM_WE <= '1';
 
                             -- decrement dst
-                            regs(31) <= regs(31) - 1;
+                            regs(7) <= regs(7) - 1;
 
                             ip <= ip + 1;
                             state_after_idle <= FETCH;
@@ -360,16 +360,16 @@ begin
 
                         -- pop: pop to dst
                         when "010100" =>
-                            MEM_ADDR <= regs(31);
+                            MEM_ADDR <= regs(7);
 
-                            regs(31) <= regs(31) + 1;
+                            regs(7) <= regs(7) + 1;
                             
                             state_after_idle <= CONTD;
                             state <= IDLE;
 
                         when others => null; -- to compile
 
-                        if (reload = '1') then
+                        --if (reload = '1') then
                             regs(to_integer(unsigned(dst))) <= dst_content;
                             regs(to_integer(unsigned(src))) <= src_content;
 
@@ -382,7 +382,7 @@ begin
 
                             -- set sf (sign flag)
                             flags(1) <= dst_content(15);
-                        end if;
+                        --end if;
                     end case;
 
                 when CONTD =>
@@ -400,7 +400,7 @@ begin
 
                             ip <= ip + 2;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                             -- END ldi
                         
@@ -410,7 +410,7 @@ begin
 
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                             -- END ld
                         
@@ -421,7 +421,7 @@ begin
 
                             ip <= ip + 1;
 
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                             -- END mul
                         
@@ -432,7 +432,7 @@ begin
 
                         -- pshi: push immediate
                         when "010010" =>
-                            MEM_ADDR <= regs(31);
+                            MEM_ADDR <= regs(7);
                             MEM_IN <= MEM_OUT;
                             MEM_WE <= '1';
 
@@ -445,12 +445,12 @@ begin
                             dst_content := MEM_OUT;
 
                             ip <= ip + 1;
-                            reload := '1';
+                            -- reload := '1';
                             state <= FETCH;
                         
                         when others => null; -- to compile
 
-                        if (reload = '1') then
+                        -- if (reload = '1') then
                             regs(to_integer(unsigned(dst))) <= dst_content;
                             regs(to_integer(unsigned(src))) <= src_content;
                             -- set zf (zero flag)
@@ -462,7 +462,7 @@ begin
 
                             -- set sf (sign flag)
                             flags(1) <= dst_content(15);
-                        end if;
+                        -- end if;
                     end case;
             end case;     
                 

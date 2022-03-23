@@ -1,22 +1,22 @@
 module ice_spram(
-    input           clk,
-    input   [7:0]   addr,
-    input   [15:0]  in,
-    output  [15:0]  out,
-    input           we,
+    input           ram_clk,
+    input   [13:0]  ram_addr,
+    input   [15:0]  ram_data_in,
+    output  [15:0]  ram_data_out,
+    input           ram_we,
 );
 
 SB_SPRAM256KA spram (
-    .ADDRESS(addr),
-    .DATAIN(in),
-    .MASKWREN({we, we, we, we}),
-    .WREN(we),
+    .ADDRESS(ram_addr),
+    .DATAIN(ram_in),
+    .MASKWREN({ram_we, ram_we, ram_we, ram_we}),
+    .WREN(ram_we),
     .CHIPSELECT(1'b1),
-    .CLOCK(clk),
+    .CLOCK(ram_clk),
     .STANDBY(1'b0),
     .SLEEP(1'b0),
     .POWEROFF(1'b1),
-    .DATAOUT(out)
+    .DATAOUT(ram_out)
 );
     
 endmodule
