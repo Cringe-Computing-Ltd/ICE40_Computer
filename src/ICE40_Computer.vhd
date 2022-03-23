@@ -63,8 +63,8 @@ architecture behavior of ICE40_Computer is
         VRAM_WE     : out   std_logic;
 
         -- CRAM Port
-        VRAM_ADDR   : out   std_logic_vector(9 downto 0);
-        VRAM_WE     : out   std_logic;
+        CRAM_ADDR   : out   std_logic_vector(9 downto 0);
+        CRAM_WE     : out   std_logic;
 
         -- RAM Port
         RAM_OUT     : in    std_logic_vector(15 downto 0);
@@ -79,13 +79,11 @@ architecture behavior of ICE40_Computer is
     signal counter      : std_logic_vector(31 downto 0) := X"00000000";
     signal step         : std_logic_vector(3 downto 0) := X"0";
 
-    signal VRAM_WE      : std_logic := '0';
+    signal VRAM_WE      : std_logic;
     signal VRAM_ADDR    : std_logic_vector(12 downto 0);
-    signal VRAM_DATA    : std_logic_vector(15 downto 0);
 
-    signal CRAM_WE      : std_logic := '0';
+    signal CRAM_WE      : std_logic;
     signal CRAM_ADDR    : std_logic_vector(9 downto 0);
-    signal CRAM_DATA    : std_logic_vector(15 downto 0);
 
     signal CPU_ADDR     : std_logic_vector(15 downto 0);
     signal CPU_MEM_IN   : std_logic_vector(15 downto 0);
@@ -102,11 +100,11 @@ begin
         VRAM_W_CLK      => CLK_25_175,
         VRAM_W_E        => VRAM_WE,
         VRAM_W_ADDR     => VRAM_ADDR,
-        VRAM_W_DATA     => VRAM_DATA,
+        VRAM_W_DATA     => CPU_MEM_IN,
         CRAM_W_CLK      => CLK_25_175,
         CRAM_W_E        => CRAM_WE,
         CRAM_W_ADDR     => CRAM_ADDR,
-        CRAM_W_DATA     => CRAM_DATA
+        CRAM_W_DATA     => CPU_MEM_IN
     );
 
     ThreadRipperPro : ICE40_CPU port map(
@@ -128,7 +126,7 @@ begin
         CRAM_ADDR   => CRAM_ADDR,
         CRAM_WE     => CRAM_WE,
         RAM_OUT     => X"0000",
-        RAM_WE      => '0'
+        RAM_WE      => open
     );
 
     leds <= "110" when (cnt(24 downto 23) = "00") else
@@ -136,54 +134,9 @@ begin
             "011" when (cnt(24 downto 23) = "10") else
             "101";
 
-    process(CLK_25_175)
-    begin
-
+    process(CLK_25_175) begin
         if(rising_edge(CLK_25_175)) then
-        
             cnt <= cnt + 1;
-
-            case step is
-
-                when "0000" =>
-                    VRAM_ADDR <= counter(12 downto 0);
-                    -- if (counter(12 downto 0) = "0000000000000") then
-                    --     VRAM_DATA <= X"4300";
-                    -- else
-                    --     VRAM_DATA <= X"0000";
-                    -- end if;
-
-                    VRAM_DATA <= '0' & counter(5 downto 3) & '0' & counter(2 downto 0) & X"00";
-                    
-                    VRAM_WE <= '1';
-                    
-                    CRAM_ADDR <= counter(9 downto 0);
-                    case counter(1 downto 0) is
-                        when "00" => CRAM_DATA <= X"1E0C";
-                        when "01" => CRAM_DATA <= X"3333";
-                        when "10" => CRAM_DATA <= X"333F";
-                        when "11" => CRAM_DATA <= X"0033";
-                        when others => CRAM_DATA <= X"0000";
-                    end case;
-                    CRAM_WE <= '1';
-
-                    step <= "0001";
-
-                when "0001" => step <= "0010";
-
-                when "0010" =>
-                    VRAM_WE <= '0';
-                    CRAM_WE <= '0';
-
-                    step <= "0011";
-
-                when "0011" =>
-                    step <= "0000";
-                    counter <= counter + 1;
-                when others => step <= "0000";
-            end case;
-
-
         end if;
     end process;
     

@@ -29,11 +29,17 @@ end entity MemoryMap;
 
 architecture behavior of MemoryMap is
 	signal wes : std_logic_vector(2 downto 0);
+    signal tmp_vram_addr : std_logic_vector(15 downto 0);
+    signal tmp_cram_addr : std_logic_vector(15 downto 0);
 begin
 
 ROM_ADDR <= CPU_ADDR(10 downto 0);
-VRAM_ADDR <= CPU_ADDR - X"0800";
-CRAM_ADDR <= CPU_ADDR - X"2000";
+
+tmp_vram_addr <= CPU_ADDR - X"0800";
+tmp_cram_addr <= CPU_ADDR - X"2000";
+
+VRAM_ADDR <= tmp_vram_addr(12 downto 0);
+CRAM_ADDR <= tmp_cram_addr(9 downto 0);
 
 CPU_MEM_OUT <=  ROM_OUT when (CPU_ADDR(15 downto 11) = "00000") else
                 RAM_OUT;

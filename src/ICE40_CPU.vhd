@@ -175,10 +175,10 @@ begin
                                 when "0100" =>
                                     jmp_cond_ok := flags(1);
                                 -- <=
-                                when "0101" => null;
+                                when "0101" =>
                                     jmp_cond_ok := flags(1) or flags(0);
                                 -- carry
-                                when "0001" => null;
+                                when "0001" =>
                                     jmp_cond_ok := flags(2);
                                 when others => null;
                             end case;

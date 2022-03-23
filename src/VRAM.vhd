@@ -101,7 +101,7 @@ begin
                     X"0000";
 
     -- Multiplex WE
-    bram_wes <= "0000000000000000000" when (we = "0") else
+    bram_wes <= "0000000000000000000" when (w_e = '0') else
                 "0000000000000000001" when (w_addr(12 downto 8) = "00000") else
                 "0000000000000000010" when (w_addr(12 downto 8) = "00001") else
                 "0000000000000000100" when (w_addr(12 downto 8) = "00010") else

@@ -27,7 +27,7 @@ build/$(DESIGN_NAME).bin: build/$(DESIGN_NAME).asc
 build/$(DESIGN_NAME).asc: build/$(DESIGN_NAME).json $(PINOUT)
 	$(NEXTPNR) $(NEXTPNR_ARGS) --json $< --pcf $(PINOUT) --asc $@
 
-build/$(DESIGN_NAME).json: src/$(DESIGN_NAME).vhd src/VGA_GEN.vhd src/VRAM.vhd src/CRAM.vhd src/ICE40_CPU.vhd 
+build/$(DESIGN_NAME).json: src/$(DESIGN_NAME).vhd src/VGA_GEN.vhd src/VRAM.vhd src/CRAM.vhd src/ICE40_CPU.vhd  src/MemoryMap.vhd
 	$(YOSYS) -m ghdl -p "ghdl -fsynopsys -fexplicit $^ -e $(DESIGN_NAME); read_verilog src/ice40_blocks/pll.v src/ice40_blocks/bram.v src/ice40_blocks/spram.v; synth_ice40 -json $@"
 
 clean:
