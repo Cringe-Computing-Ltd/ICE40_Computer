@@ -27,6 +27,8 @@ architecture mannerisms of ICE40_CPU is
     -- [nf, sf, cf, XXX]
     signal flags : std_logic_vector(3 downto 0) := "0000";
 
+
+    signal regs : std_logic_vector((16 * 8 - 1) downto 0);
     signal a : std_logic_vector(15 downto 0);
     signal b : std_logic_vector(15 downto 0);
     signal c : std_logic_vector(15 downto 0);
@@ -43,6 +45,9 @@ begin
     -- insert mem things
     process(CLK)
         variable carrier_tmp : std_logic_vector(16 downto 0);
+
+        variable dst_content : std_logic_vector(15 downto 0);
+        variable src_content : std_logic_vector(15 downto 0);
     begin
         if(rising_edge(CLK)) then
             case state is
