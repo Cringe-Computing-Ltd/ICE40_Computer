@@ -48,6 +48,30 @@ architecture behavior of ICE40_Computer is
     );
     end component;
 
+    component MemoryMap is port(
+        -- CPU Port
+        CPU_ADDR    : in    std_logic_vector(15 downto 0);
+        CPU_MEM_OUT : out   std_logic_vector(15 downto 0);
+        CPU_WE      : in    std_logic;
+
+        -- ROM Port
+        ROM_ADDR    : out   std_logic_vector(10 downto 0);
+        ROM_OUT     : in    std_logic_vector(15 downto 0);
+
+        -- VRAM Port
+        VRAM_ADDR   : out   std_logic_vector(12 downto 0);
+        VRAM_WE     : out   std_logic;
+
+        -- CRAM Port
+        VRAM_ADDR   : out   std_logic_vector(9 downto 0);
+        VRAM_WE     : out   std_logic;
+
+        -- RAM Port
+        RAM_OUT     : in    std_logic_vector(15 downto 0);
+        RAM_WE      : out   std_logic
+    );
+    end component;
+
     signal cnt          : std_logic_vector(25 downto 0) := "00000000000000000000000000";
 
     signal CLK_25_175   : std_logic;
@@ -56,12 +80,17 @@ architecture behavior of ICE40_Computer is
     signal step         : std_logic_vector(3 downto 0) := X"0";
 
     signal VRAM_WE      : std_logic := '0';
-    signal VRAM_ADDR    : std_logic_vector(12 downto 0) := "0000000000000";
-    signal VRAM_DATA    : std_logic_vector(15 downto 0) := X"0000";
+    signal VRAM_ADDR    : std_logic_vector(12 downto 0);
+    signal VRAM_DATA    : std_logic_vector(15 downto 0);
 
     signal CRAM_WE      : std_logic := '0';
-    signal CRAM_ADDR    : std_logic_vector(9 downto 0) := "0000000000";
-    signal CRAM_DATA    : std_logic_vector(15 downto 0) := X"0000";
+    signal CRAM_ADDR    : std_logic_vector(9 downto 0);
+    signal CRAM_DATA    : std_logic_vector(15 downto 0);
+
+    signal CPU_ADDR     : std_logic_vector(15 downto 0);
+    signal CPU_MEM_IN   : std_logic_vector(15 downto 0);
+    signal CPU_MEM_OUT  : std_logic_vector(15 downto 0);
+    signal CPU_MEM_WE   : std_logic;
 
 begin
     RTX_3090ti : VGA_GEN port map(
@@ -82,18 +111,25 @@ begin
 
     ThreadRipperPro : ICE40_CPU port map(
         CLK         => CLK_25_175,
-        MEM_ADDR    => open,
-        MEM_IN      => open,
-        MEM_OUT     => X"0000"
+        MEM_ADDR    => CPU_ADDR,
+        MEM_IN      => CPU_MEM_IN,
+        MEM_OUT     => CPU_MEM_OUT,
+        MEM_WE      => CPU_MEM_WE
     );
 
-    -- process(CLK_100)
-    -- begin
-    --     if(rising_edge(CLK_100)) then
-    --         cnt <= cnt + 1;
-    --     end if;
-    --     leds <= NOT cnt(25 downto 23); 
-    -- end process;
+    mmap : MemoryMap port map(
+        CPU_ADDR    => CPU_ADDR,
+        CPU_MEM_OUT => CPU_MEM_OUT,
+        CPU_WE      => CPU_MEM_WE,
+        ROM_ADDR    => open,
+        ROM_OUT     => X"0000",
+        VRAM_ADDR   => VRAM_ADDR,
+        VRAM_WE     => VRAM_WE,
+        CRAM_ADDR   => CRAM_ADDR,
+        CRAM_WE     => CRAM_WE,
+        RAM_OUT     => X"0000",
+        RAM_WE      => '0'
+    );
 
     leds <= "110" when (cnt(24 downto 23) = "00") else
             "101" when (cnt(24 downto 23) = "01") else
