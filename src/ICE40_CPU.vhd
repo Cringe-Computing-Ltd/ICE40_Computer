@@ -8,7 +8,8 @@ entity ICE40_CPU is port(
     CLK : in std_logic;
     MEM_ADDR : out std_logic_vector(15 downto 0);
     MEM_IN : out std_logic_vector(15 downto 0);
-    MEM_OUT : in std_logic_vector(15 downto 0)
+    MEM_OUT : in std_logic_vector(15 downto 0);
+    MEM_WE : out std_logic
 );
 end entity;
 
@@ -56,6 +57,7 @@ begin
             case state is
                 when FETCH => 
                     MEM_ADDR <= ip;
+                    MEM_WE <= '0';
 
                     state <= IDLE;
                     state_after_idle <= EXEC;
@@ -94,6 +96,7 @@ begin
                         when "000001" =>
                             MEM_ADDR <= dst_content;
                             MEM_IN <= src_content;
+                            MEM_WE <= '1';
                         
                             ip <= ip + 1;
 
@@ -271,6 +274,7 @@ begin
                         when "001100" =>
                             MEM_ADDR <= ip + 1;
                             MEM_IN <= dst_content;
+                            MEM_WE <= '1';
 
                             ip <= ip + 2;
 
@@ -342,10 +346,13 @@ begin
 
                         -- psh: push dst
                         when "010011" =>
+                            -- write dst_content into [rsp - 1]
                             MEM_ADDR <= regs(31) - 1;
-                            regs(31) <= regs(31) - 1;
-
                             MEM_IN <= dst_content;
+                            MEM_WE <= '1';
+
+                            -- decrement dst
+                            regs(31) <= regs(31) - 1;
 
                             ip <= ip + 1;
                             state_after_idle <= FETCH;
@@ -427,6 +434,7 @@ begin
                         when "010010" =>
                             MEM_ADDR <= regs(31);
                             MEM_IN <= MEM_OUT;
+                            MEM_WE <= '1';
 
                             ip <= ip + 2;
                             state_after_idle <= FETCH;

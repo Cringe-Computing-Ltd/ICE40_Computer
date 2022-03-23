@@ -43,7 +43,8 @@ architecture behavior of ICE40_Computer is
         CLK         : in std_logic;
         MEM_ADDR    : out std_logic_vector(15 downto 0);
         MEM_IN      : out std_logic_vector(15 downto 0);
-        MEM_OUT     : in std_logic_vector(15 downto 0)
+        MEM_OUT     : in std_logic_vector(15 downto 0);
+        MEM_WE      : out std_logic
     );
     end component;
 
