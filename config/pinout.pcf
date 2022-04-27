@@ -1,13 +1,46 @@
 # VGA_Pong pin mappings
 
-set_io CLK_100 46
+# µFlake board pin definitions
 
-set_io VGA_OUT[0] 43
-set_io VGA_OUT[1] 38
-set_io VGA_OUT[2] 42
-set_io VGA_HS 36
-set_io VGA_VS 37
+set_io CLK_100 20
 
-set_io leds[0] 39
-set_io leds[1] 40
-set_io leds[2] 41
+set_io SW[0]        13
+set_io SW[1]        12
+set_io SW[2]        11
+set_io SW[3]        10
+set_io SW[4]        9
+set_io SW[5]        6
+set_io SW[6]        4
+set_io SW[7]        3
+
+set_io BTN[0]       18
+set_io BTN[1]       19
+
+set_io VGA_VS       23
+set_io VGA_HS       21
+set_io VGA_OUT[0]   27
+set_io VGA_OUT[1]   26
+set_io VGA_OUT[2]   25
+
+set_io PS2_CLK      31
+set_io PS2_DATA     28
+
+set_io leds[0]       39
+set_io leds[1]       40
+set_io leds[2]       41
+
+set_io SEG_A[0]     32
+set_io SEG_A[1]     34
+set_io SEG_A[2]     35
+set_io SEG_A[3]     36
+set_io SEG_A[4]     37
+set_io SEG_A[5]     38
+set_io SEG_A[6]     42
+
+set_io SEG_B[0]     43
+set_io SEG_B[1]     44
+set_io SEG_B[2]     45
+set_io SEG_B[3]     46
+set_io SEG_B[4]     47
+set_io SEG_B[5]     48
+set_io SEG_B[6]     2

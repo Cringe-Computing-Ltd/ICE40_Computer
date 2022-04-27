@@ -8,7 +8,11 @@ entity ICE40_Computer is port(
 	leds : out std_logic_vector(2 downto 0);
     VGA_OUT : out std_logic_vector(2 downto 0);
     VGA_HS : out std_logic;
-    VGA_VS : out std_logic
+    VGA_VS : out std_logic;
+    BTN : in std_logic_vector(1 downto 0);
+    SW : in std_logic_vector(7 downto 0);
+    SEG_A : out std_logic_vector(6 downto 0);
+    SEG_B : out std_logic_vector(6 downto 0)
 );
 end entity ICE40_Computer;
 
@@ -38,6 +42,21 @@ architecture behavior of ICE40_Computer is
         CRAM_W_DATA     : in    std_logic_vector(15 downto 0)
     );
     end component;
+
+    component Debug is port(
+        spi_cram    : in	std_logic;
+        spi_rst     : in	std_logic;
+        spi_clk	    : in	std_logic;
+        spi_data    : in	std_logic;
+        vram_addr   : out	std_logic_vector(12 downto 0);
+        vram_data   : out	std_logic_vector(15 downto 0);
+        vram_e      : out	std_logic;
+        cram_addr   : out	std_logic_vector(9 downto 0);
+        cram_data   : out	std_logic_vector(15 downto 0);
+        cram_e      : out	std_logic;
+        TEMP_OUT   : out	std_logic_vector(15 downto 0)
+    );
+    end component Debug;
 
     component ICE40_CPU is port(
         CLK         : in std_logic;
@@ -93,6 +112,12 @@ architecture behavior of ICE40_Computer is
     );
     end component;
 
+    component SevenSegment is port(
+        inp	: in std_logic_vector(3 downto 0);
+        outp : out	std_logic_vector(6 downto 0)
+    );
+    end component;
+
     signal cnt          : std_logic_vector(25 downto 0) := "00000000000000000000000000";
 
     signal CLK_25_175   : std_logic;
@@ -100,11 +125,15 @@ architecture behavior of ICE40_Computer is
     signal counter      : std_logic_vector(31 downto 0) := X"00000000";
     signal step         : std_logic_vector(3 downto 0) := X"0";
 
+    signal VRAM_CLK     : std_logic;
     signal VRAM_WE      : std_logic;
     signal VRAM_ADDR    : std_logic_vector(12 downto 0);
+    signal VRAM_DATA    : std_logic_vector(15 downto 0);
 
+    signal CRAM_CLK     : std_logic;
     signal CRAM_WE      : std_logic;
     signal CRAM_ADDR    : std_logic_vector(9 downto 0);
+    signal CRAM_DATA    : std_logic_vector(15 downto 0);
 
     signal ROM_ADDR    : std_logic_vector(10 downto 0);
     signal ROM_DATA    : std_logic_vector(15 downto 0);
@@ -122,6 +151,8 @@ architecture behavior of ICE40_Computer is
     signal startup_counter  : std_logic_vector(31 downto 0) := X"00000000";
     signal ram_ready : std_logic := '0';
 
+    signal DEBUG_OUT  : std_logic_vector(15 downto 0);
+
 begin
     RTX_3090ti : VGA_GEN port map(
         CLK_100         => CLK_100,
@@ -129,14 +160,14 @@ begin
         VGA_OUT         => VGA_OUT,
         VGA_HS          => VGA_HS,
         VGA_VS          => VGA_VS,
-        VRAM_W_CLK      => CPU_CLK,
+        VRAM_W_CLK      => SW(0),
         VRAM_W_E        => VRAM_WE,
         VRAM_W_ADDR     => VRAM_ADDR,
-        VRAM_W_DATA     => CPU_MEM_IN,
-        CRAM_W_CLK      => CPU_CLK,
+        VRAM_W_DATA     => VRAM_DATA,
+        CRAM_W_CLK      => SW(0),
         CRAM_W_E        => CRAM_WE,
         CRAM_W_ADDR     => CRAM_ADDR,
-        CRAM_W_DATA     => CPU_MEM_IN
+        CRAM_W_DATA     => CRAM_DATA
     );
 
     ThreadRipperPro : ICE40_CPU port map(
@@ -166,24 +197,51 @@ begin
         w_e         => RAM_WE
     );
 
-    mmap : MemoryMap port map(
-        CPU_ADDR    => CPU_ADDR,
-        CPU_MEM_OUT => CPU_MEM_OUT,
-        CPU_WE      => CPU_MEM_WE,
-        ROM_ADDR    => ROM_ADDR,
-        ROM_OUT     => ROM_DATA,
-        VRAM_ADDR   => VRAM_ADDR,
-        VRAM_WE     => VRAM_WE,
-        CRAM_ADDR   => CRAM_ADDR,
-        CRAM_WE     => CRAM_WE,
-        RAM_OUT     => RAM_DATA_OUT,
-        RAM_WE      => RAM_WE
+    debugger : Debug port map(
+        spi_cram    => SW(2),
+        spi_rst     => SW(3),
+        spi_clk	    => SW(0),
+        spi_data    => SW(1),
+        vram_addr   => VRAM_ADDR,
+        vram_data   => VRAM_DATA,
+        vram_e      => VRAM_WE,
+        cram_addr   => CRAM_ADDR,
+        cram_data   => CRAM_DATA,
+        cram_e      => CRAM_WE,
+        TEMP_OUT    => DEBUG_OUT
     );
 
-    leds <= "110" when (cnt(24 downto 23) = "00") else
-            "101" when (cnt(24 downto 23) = "01") else
-            "011" when (cnt(24 downto 23) = "10") else
-            "101";
+    sega : SevenSegment port map(
+        inp	  => DEBUG_OUT(3 downto 0),
+        outp  => SEG_A
+    );
+
+    segb : SevenSegment port map(
+        inp	  => DEBUG_OUT(7 downto 4),
+        outp  => SEG_B
+    );
+
+    leds <= not SW(2 downto 0);
+    
+
+    -- mmap : MemoryMap port map(
+    --     CPU_ADDR    => CPU_ADDR,
+    --     CPU_MEM_OUT => CPU_MEM_OUT,
+    --     CPU_WE      => CPU_MEM_WE,
+    --     ROM_ADDR    => ROM_ADDR,
+    --     ROM_OUT     => ROM_DATA,
+    --     VRAM_ADDR   => VRAM_ADDR,
+    --     VRAM_WE     => VRAM_WE,
+    --     CRAM_ADDR   => CRAM_ADDR,
+    --     CRAM_WE     => CRAM_WE,
+    --     RAM_OUT     => RAM_DATA_OUT,
+    --     RAM_WE      => RAM_WE
+    -- );
+
+    -- leds <= "110" when (cnt(24 downto 23) = "00") else
+    --         "101" when (cnt(24 downto 23) = "01") else
+    --         "011" when (cnt(24 downto 23) = "10") else
+    --         "101";
 
     CPU_CLK <= cnt(1) and ram_ready;
 
