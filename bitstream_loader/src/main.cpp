@@ -3,6 +3,7 @@
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
 #include "../../build/bitstream.h"
+#include "font.h"
 
 #define UPLOAD_BAUDRATE 16000000
 
@@ -118,8 +119,15 @@ int main() {
 
     // Write CRAM with all 1
     gpio_put(GPU_CRAM, 1);
-    for (int i = 0; i < 1024; i++) {
-        spi_write16_blocking(spi0, &testfont[i % 4], 1);
+    for (int i = 0; i < 128; i++) {
+        unsigned short line0 = (font8x8_basic[i*8][0] << 8) | font8x8_basic[i*8][1];
+        unsigned short line1 = (font8x8_basic[i*8][2] << 8) | font8x8_basic[i*8][3];
+        unsigned short line2 = (font8x8_basic[i*8][4] << 8) | font8x8_basic[i*8][5];
+        unsigned short line3 = (font8x8_basic[i*8][6] << 8) | font8x8_basic[i*8][7];
+        spi_write16_blocking(spi0, &line0, 1);
+        spi_write16_blocking(spi0, &line1, 1);
+        spi_write16_blocking(spi0, &line2, 1);
+        spi_write16_blocking(spi0, &line3, 1);
     }
 
     // Reset again
