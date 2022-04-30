@@ -46,8 +46,8 @@ begin
     DEBUG_OUT <= regs(0)(7 downto 0);
 
     process(CLK)
-        -- carrier_tmp: contains the last carry bit to set the flag
-        variable carrier_tmp : std_logic_vector(16 downto 0);
+        -- alu_op_out: contains the last carry bit to set the flag
+        variable alu_op_out : std_logic_vector(16 downto 0);
         -- mult_tmp: contains the full result of a multiplication
         variable mult_tmp : std_logic_vector(31 downto 0) := X"00000000";
         -- tmp
@@ -148,53 +148,53 @@ begin
                         
                         -- add: puts dst+src into dst
                         when "000110" =>
-                            carrier_tmp := ('0' & dst_content) + ('0' & src_content);
+                            alu_op_out := ('0' & dst_content) + ('0' & src_content);
 
                             -- result
-                            regs(to_integer(unsigned(dst))) <= carrier_tmp(15 downto 0);
+                            regs(to_integer(unsigned(dst))) <= alu_op_out(15 downto 0);
 
                             -- flags
-                            if (carrier_tmp(15 downto 0) = X"0000") then
+                            if (alu_op_out(15 downto 0) = X"0000") then
                                 flags(0) <= '1';
                             else
                                 flags(0) <= '0';
                             end if;
-                            flags(1) <= carrier_tmp(15);
-                            flags(2) <= carrier_tmp(16);
+                            flags(1) <= alu_op_out(15);
+                            flags(2) <= alu_op_out(16);
 
                             ip <= ip + 1;
                             state <= FETCH;
                         
                         -- sub: put dst-src into dst
                         when "000111" =>
-                            carrier_tmp := ('0' & dst_content) - ('0' & src_content);
+                            alu_op_out := ('0' & dst_content) - ('0' & src_content);
 
                             -- result
-                            regs(to_integer(unsigned(dst))) <= carrier_tmp(15 downto 0);
+                            regs(to_integer(unsigned(dst))) <= alu_op_out(15 downto 0);
 
                             -- flags
-                            if (carrier_tmp(15 downto 0) = X"0000") then
+                            if (alu_op_out(15 downto 0) = X"0000") then
                                 flags(0) <= '1';
                             else
                                 flags(1) <= '0';
                             end if;
-                            flags(1) <= carrier_tmp(15);
-                            flags(2) <= carrier_tmp(16);
+                            flags(1) <= alu_op_out(15);
+                            flags(2) <= alu_op_out(16);
                             
                             ip <= ip + 1;
                             state <= FETCH;
                       
                         -- cmp: compares dst and src
                         when "001000" =>
-                            carrier_tmp := ('0' & dst_content) - ('0' & src_content);
+                            alu_op_out := ('0' & dst_content) - ('0' & src_content);
 
-                            if (carrier_tmp(15 downto 0) = "0000000000000000") then
+                            if (alu_op_out(15 downto 0) = "0000000000000000") then
                                 flags(0) <= '1';
                             else
                                 flags(0) <= '0';
                             end if;
-                            flags(1) <= carrier_tmp(15);
-                            flags(2) <= carrier_tmp(16);
+                            flags(1) <= alu_op_out(15);
+                            flags(2) <= alu_op_out(16);
 
                             ip <= ip + 1;
                             state <= FETCH;
