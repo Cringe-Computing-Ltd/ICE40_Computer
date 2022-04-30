@@ -5,41 +5,40 @@ use ieee.numeric_std.all;
 
 
 entity ICE40_CPU is port(
-    CLK : in std_logic;
-    MEM_ADDR : out std_logic_vector(15 downto 0);
-    MEM_IN : out std_logic_vector(15 downto 0);
-    MEM_OUT : in std_logic_vector(15 downto 0);
-    MEM_WE : out std_logic;
-    HALT : in std_logic;
+    CLK         : in    std_logic;
+    MEM_ADDR    : out   std_logic_vector(15 downto 0);
+    MEM_IN      : out   std_logic_vector(15 downto 0);
+    MEM_OUT     : in    std_logic_vector(15 downto 0);
+    MEM_WE      : out   std_logic;
+    HALT        : in    std_logic;
 
-    DEBUG_OUT : out std_logic_vector(7 downto 0) := X"00"
+    DEBUG_OUT   : out   std_logic_vector(7 downto 0) := X"00"
 );
 end entity;
 
 architecture mannerisms of ICE40_CPU is
+    -- CPU micro-state
     type EXEC_STATES is (FETCH, IDLE, EXEC, CONTD);
+    signal state                :   EXEC_STATES                     := FETCH;
+    signal state_after_idle     :   EXEC_STATES                     := FETCH;
     
-    signal ip : std_logic_vector(15 downto 0) := "0000000000000000";
-    type REGS_T is array (7 downto 0) of std_logic_vector(15 downto 0);
-    
-    signal state : EXEC_STATES := FETCH;
-    signal state_after_idle : EXEC_STATES := FETCH;
-    
-    signal opcode_contd : std_logic_vector(5 downto 0) := "000000";
-    signal dst_contd : std_logic_vector(4 downto 0) := "00000";
-    signal src_contd : std_logic_vector (4 downto 0) := "00000";
-
+    -- Saved values for subsequent instruction cycles
+    signal opcode_contd         :   std_logic_vector(5 downto 0)    := "000000";
+    signal dst_contd            :   std_logic_vector(4 downto 0)    := "00000";
+    signal src_contd            :   std_logic_vector (4 downto 0)   := "00000";
     -- todo: get rid of these
-    signal dst_content_contd : std_logic_vector(15 downto 0) := "0000000000000000";
-    signal src_content_contd : std_logic_vector(15 downto 0) := "0000000000000000";
+    signal dst_content_contd    :   std_logic_vector(15 downto 0)   := "0000000000000000";
+    signal src_content_contd    :   std_logic_vector(15 downto 0)   := "0000000000000000";
 
-    -- [zf, sf, cf, Pizza]
-    signal flags : std_logic_vector(3 downto 0) := "0000";
-
-
+    -- General purpose registers
+    type REGS_T is array (7 downto 0) of std_logic_vector(15 downto 0);
     signal regs : REGS_T := (others => "0000000000000000");
 
+    -- Flags [zf, sf, cf, Pizza]
+    signal flags : std_logic_vector(3 downto 0) := "0000";
 
+    -- Instruction pointer
+    signal ip : std_logic_vector(15 downto 0) := "0000000000000000";
 
 begin
     -- insert mem things
