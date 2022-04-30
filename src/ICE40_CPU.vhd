@@ -18,16 +18,20 @@ end entity;
 
 architecture mannerisms of ICE40_CPU is
     type EXEC_STATES is (FETCH, IDLE, EXEC, CONTD);
-    type REGS_T is array (7 downto 0) of std_logic_vector(15 downto 0);
+    
     signal ip : std_logic_vector(15 downto 0) := "0000000000000000";
+    type REGS_T is array (7 downto 0) of std_logic_vector(15 downto 0);
+    
     signal state : EXEC_STATES := FETCH;
     signal state_after_idle : EXEC_STATES := FETCH;
     
-    signal opcode_longlive : std_logic_vector(5 downto 0) := "000000";
-    signal dst_longlive : std_logic_vector(4 downto 0) := "00000";
-    signal src_longlive : std_logic_vector (4 downto 0) := "00000";
-    signal dst_content_longlive : std_logic_vector(15 downto 0) := "0000000000000000";
-    signal src_content_longlive : std_logic_vector(15 downto 0) := "0000000000000000";
+    signal opcode_contd : std_logic_vector(5 downto 0) := "000000";
+    signal dst_contd : std_logic_vector(4 downto 0) := "00000";
+    signal src_contd : std_logic_vector (4 downto 0) := "00000";
+
+    -- todo: get rid of these
+    signal dst_content_contd : std_logic_vector(15 downto 0) := "0000000000000000";
+    signal src_content_contd : std_logic_vector(15 downto 0) := "0000000000000000";
 
     -- [zf, sf, cf, Pizza]
     signal flags : std_logic_vector(3 downto 0) := "0000";
@@ -36,18 +40,24 @@ architecture mannerisms of ICE40_CPU is
     signal regs : REGS_T := (others => "0000000000000000");
 
 
-    signal multmp : std_logic_vector(31 downto 0) := X"00000000";
 
 begin
     -- insert mem things
     DEBUG_OUT <= regs(0)(7 downto 0);
 
     process(CLK)
+        -- carrier_tmp: contains the last carry bit to set the flag
         variable carrier_tmp : std_logic_vector(16 downto 0);
+        -- mult_tmp: contains the full result of a multiplication
+        variable mult_tmp : std_logic_vector(31 downto 0) := X"00000000";
+	-- tmp
+	variable tmp : std_logic_vector(15 downto 0);
 
         variable opcode : std_logic_vector(5 downto 0);
         variable src : std_logic_vector(4 downto 0);
         variable dst : std_logic_vector(4 downto 0);
+
+        -- todo: get rid of these
         variable dst_content : std_logic_vector(15 downto 0);
         variable src_content : std_logic_vector(15 downto 0);
 
@@ -73,93 +83,226 @@ begin
 
                 when EXEC =>
                     opcode := MEM_OUT(5 downto 0);
-                    opcode_longlive <= opcode;
-
-                    -- reg ids
                     dst := MEM_OUT(10 downto 6);
                     src := MEM_OUT(15 downto 11);
-
-                    dst_longlive <= dst;
-                    src_longlive <= src;
 
                     dst_content := regs(to_integer(unsigned(dst)));
                     src_content := regs(to_integer(unsigned(src)));
 
-                    dst_content_longlive <= dst_content;
-                    src_content_longlive <= src_content;
+                    opcode_contd <= opcode;
+                    dst_contd <= dst;
+                    src_contd <= src;
+                    
+                    -- get rid of this
+                    dst_content_contd <= dst_content;
+                    src_content_contd <= src_content;
                     
                     case opcode is
-                        -- ldi: load imm into dst.
+                        -- mvi: put imm into dst
                         when "000000" =>
                             MEM_ADDR <= ip + 1;
 
                             state <= IDLE;
                             state_after_idle <= CONTD;
                             -- FALLTHROUGH CONTD
-
-                        -- st: store src into [dst]
+                            
+                        -- mvr: move src into dst
                         when "000001" =>
-                            MEM_ADDR <= dst_content;
-                            MEM_IN <= src_content;
-                            MEM_WE <= '1';
-                        
-                            ip <= ip + 1;
+			    regs(to_integer(unsigned(dst))) <= src_content;
 
-                            state <= IDLE;
-                            state_after_idle <= FETCH;
-                            -- END st
+                            ip <= ip + 1;
+                            state <= FETCH;
                         
-                        -- ld: load [src] into dst
+                         -- xcg: exchange dst and src
                         when "000010" =>
+                            regs(to_integer(unsigned(src))) <= dst_content;
+                            regs(to_integer(unsigned(dst))) <= src_content;
+
+                            ip <= ip + 1;
+                            state <= FETCH;
+                         
+                        -- ldr: puts [src] into dst
+                        when "000011" =>
                             MEM_ADDR <= src_content;
                             
                             state <= IDLE;
                             state_after_idle <= CONTD;
                             -- FALLTHROUGH CONTD
+
+                        -- sti: store src into [imm]
+                        when "000100" =>
+                            MEM_ADDR <= ip + 1;
+
+                            state <= IDLE;
+                            state_after_idle <= CONTD;
+                         
+                        -- str: store src into [dst]
+                        when "000101" =>
+                            MEM_ADDR <= dst_content;
+                            MEM_IN <= src_content;
+                            MEM_WE <= '1';
                         
-                        -- add: put dst+src into dst
-                        when "000011" =>
+                            ip <= ip + 1;
+                            state <= IDLE;
+                            state_after_idle <= FETCH;
+                        
+                        -- add: puts dst+src into dst
+                        when "000110" =>
                             carrier_tmp := ('0' & dst_content) + ('0' & src_content);
 
-                            -- set result
+                            -- result
                             regs(to_integer(unsigned(dst))) <= carrier_tmp(15 downto 0);
 
-                            -- set cf (carry)
+                            -- flags
+			    if (carrier_tmp(15 downto 0) = X"0000") then
+				flags(0) <= '1';
+			    else
+				flags(0) <= '0';
+			    end if;
+                            flags(1) <= carrier_tmp(15);
                             flags(2) <= carrier_tmp(16);
 
                             ip <= ip + 1;
-
-                            reload := '1';
                             state <= FETCH;
-                            -- END add
                         
                         -- sub: put dst-src into dst
-                        when "000100" =>
+                        when "000111" =>
                             carrier_tmp := ('0' & dst_content) - ('0' & src_content);
 
-                            -- set result
+                            -- result
                             regs(to_integer(unsigned(dst))) <= carrier_tmp(15 downto 0);
 
-                            -- set cf (carry)
+                            -- flags
+			    if (carrier_tmp(15 downto 0) = X"0000") then
+				flags(0) <= '1';
+			    else
+				flags(1) <= '0';
+			    end if;
+			    flags(1) <= carrier_tmp(15);
                             flags(2) <= carrier_tmp(16);
                             
                             ip <= ip + 1;
-
-                            reload := '1';
                             state <= FETCH;
-                            -- END sub
-                        
-                        -- mul: put dst*src into d:dst ()
-                        when "000101" =>
-                            multmp <= dst_content*src_content;
+                      
+                        -- cmp: compares dst and src
+                        when "001000" =>
+                            carrier_tmp := ('0' & dst_content) - ('0' & src_content);
 
-                            flags(2) <= '0';
+                            if (carrier_tmp(15 downto 0) = "0000000000000000") then
+                                flags(0) <= '1';
+                            else
+                                flags(0) <= '0';
+                            end if;
+                            flags(1) <= carrier_tmp(15);
+                            flags(2) <= carrier_tmp(16);
 
-                            state <= CONTD;
-                            -- FALLTHROUGH CONTD
+                            ip <= ip + 1;
+                            state <= FETCH;
+                            
+                        -- mul: put dst*src into d:dst
+                        when "001001" =>
+                            mult_tmp := dst_content*src_content;
+
+                            regs(to_integer(unsigned(dst))) <= mult_tmp(15 downto 0);
+                            regs(3) <= mult_tmp(31 downto 16);
+
+			    -- TODO: fill flags correctly
+			    flags <= X"0";
+
+                            ip <= ip + 1;
+                            state <= FETCH;
+
+                            
+                        -- inc: increment dst
+		        -- note: temporarily doesn't update flags
+                        when "001010" =>
+                            tmp := dst_content + X"0001";
+
+                            regs(to_integer(unsigned(dst))) <= tmp;
+
+                            ip <= ip + 1;
+                            state <= FETCH;
                         
+                        -- dec: decrement dst
+			-- note: temporarily only updates zf
+                        when "001011" =>
+			    tmp := dst_content - X"0001";
+
+                            regs(to_integer(unsigned(dst))) <= tmp;
+
+			    if (tmp = X"0000") then
+				flags(0) <= '1';
+			    else
+				flags(0) <= '0';
+			    end if;
+
+                            ip <= ip + 1;
+                            state <= FETCH;
+                            
+                        -- xor: dst = dst xor b
+                        when "001100" =>
+			    tmp := dst_content xor src_content;
+                            regs(to_integer(unsigned(dst))) <= tmp;
+
+			    if (tmp = X"0000") then
+				flags(0) <= '1';
+			    else
+				flags(0) <= '0';
+			    end if;
+			    flags(1) <= tmp(15);
+			    flags(2) <= '0';
+
+                            ip <= ip + 1;
+                            state <= FETCH;
+                        
+                        -- and: dst = dst and src
+                        when "001101" =>
+			    tmp := dst_content and src_content;
+                            regs(to_integer(unsigned(dst))) <= tmp;
+
+			    if (tmp = X"0000") then
+				flags(0) <= '1';
+			    else
+				flags(0) <= '0';
+			    end if;
+			    flags(1) <= tmp(15);
+			    flags(2) <= '0';
+
+                            ip <= ip + 1;
+                            state <= FETCH;
+
+                        -- or: dst = dst or src
+                        when "001110" =>
+			    tmp := dst_content or src_content;
+                            regs(to_integer(unsigned(dst))) <= tmp;
+
+			    if (tmp = X"0000") then
+				flags(0) <= '1';
+			    else
+				flags(0) <= '0';
+			    end if;
+			    flags(1) <= tmp(15);
+			    flags(2) <= '0';
+
+                            ip <= ip + 1;
+                            state <= FETCH;
+                      
+                        -- shl: shift left
+                        when "001111" => 
+                            regs(to_integer(unsigned(dst))) <= std_logic_vector(shift_left(unsigned(dst_content), to_integer(unsigned(src_content))));
+
+                            ip <= ip + 1;
+                            state <= FETCH;
+
+                        -- shr: shift right
+                        when "010000" =>
+                            regs(to_integer(unsigned(dst))) <= std_logic_vector(shift_right(unsigned(dst_content), to_integer(unsigned(src_content))));
+
+                            ip <= ip + 1;
+                            state <= FETCH;
+                                             
                         -- jmp: jump to dst
-                        when "000110" =>
+                        when "010001" =>
                             case src(3 downto 0) is
                                 -- unconditional
                                 when "0000" =>
@@ -216,123 +359,8 @@ begin
                                 state <= FETCH;
                             end if;
                             -- END jmp
-
-                        -- mov: exchange dst and src
-                        when "000111" =>
-                            regs(to_integer(unsigned(src))) <= dst_content;
-                            regs(to_integer(unsigned(dst))) <= src_content;
-
-                            ip <= ip + 1;
-
-                            reload := '1';
-                            state <= FETCH;
-                            -- END xchg
-                        
-                        -- xor: dst = dst xor b
-                        when "001000" =>
-                            regs(to_integer(unsigned(dst))) <= dst_content xor src_content;
-
-                            ip <= ip + 1;
-
-                            reload := '1';
-                            state <= FETCH;
-                            -- END xor
-                        
-                        -- and: dst = dst and src
-                        when "001001" =>
-                            regs(to_integer(unsigned(dst))) <= dst_content and src_content;
-
-                            ip <= ip + 1;
-
-                            state <= FETCH;
-
-                        when "001010" =>
-                            regs(to_integer(unsigned(dst))) <= dst_content or src_content;
-
-                            ip <= ip + 1;
-
-                            state <= FETCH;
-
-                        -- cmp: compares dst and src
-                        when "001011" =>
-                            carrier_tmp := ('0' & dst_content) - ('0' & src_content);
-
-                            if (carrier_tmp(15 downto 0) = "0000000000000000") then
-                                flags(0) <= '1';
-                            else
-                                flags(0) <= '0';
-                            end if;
-
-                            flags(1) <= carrier_tmp(15);
-                            flags(2) <= carrier_tmp(16);
-
-                            ip <= ip + 1;
-                            state <= FETCH;
-                            -- END cmp
-                        
-                        -- sti: store dst into imm
-                        when "001100" =>
-                            MEM_ADDR <= ip + 1;
-
-                            state <= IDLE;
-                            state_after_idle <= CONTD;
-                            -- END sti
-
-                        -- shl: shift left
-                        when "001101" => 
-                            dst_content := std_logic_vector(shift_left(unsigned(dst_content), to_integer(unsigned(src_content))));
-                            ip <= ip + 1;
-
-                            reload := '1';
-                            state <= FETCH;
-
-                        -- shr: shift right
-                        when "001110" =>
-                            dst_content := std_logic_vector(shift_right(unsigned(dst_content), to_integer(unsigned(src_content))));
-                            ip <= ip + 1;
-
-                            reload := '1';
-                            state <= FETCH;
-                        
-                        -- mov: move src into dst
-                        when "001111" =>
-                            tmp_content := src_content;
-                            src_content := dst_content;
-                            dst_content := src_content;
-
-                            ip <= ip + 1;
-                            -- reload := '1';
-                            state <= FETCH;
-
-                        -- inc: increment dst
-                        when "010000" =>
-                            carrier_tmp := ('0' & dst_content) + ('0' & "0000000000000001");
-
-                            -- set result
-                            dst_content := carrier_tmp(15 downto 0);
-
-                            -- set cf (carry)
-                            flags(2) <= carrier_tmp(16);
-
-                            ip <= ip + 1;
-                            -- reload := '1';
-                            state <= FETCH;
-                        
-                        -- dec: decrement dst
-                        when "010001" =>
-                            carrier_tmp := ('0' & dst_content) - ('0' & "0000000000000001");
-
-                            -- set result
-                            dst_content := carrier_tmp(15 downto 0);
-
-                            -- set cf (carry)
-                            flags(2) <= carrier_tmp(16);
-
-                            ip <= ip + 1;
-                            reload := '1';
-                            state <= FETCH;
-
-                        -- pshi: push immediate
+                            
+                        -- psi: push immediate
                         when "010010" =>
                             MEM_ADDR <= ip + 1;
                             regs(7) <= regs(7) - 1;
@@ -368,76 +396,47 @@ begin
                             state <= FETCH;
 
                         when others => null; -- to compile
-
-                        --if (reload = '1') then
-                            regs(to_integer(unsigned(dst))) <= dst_content;
-                            regs(to_integer(unsigned(src))) <= src_content;
-
-                            -- set zf (zero flag)
-                            if (dst_content = "0000000000000000") then
-                                flags(0) <= '1';
-                            else
-                                flags(0) <= '0';
-                            end if;
-
-                            -- set sf (sign flag)
-                            flags(1) <= dst_content(15);
-                        --end if;
                     end case;
 
                 when CONTD =>
                     -- restore the variable
-                    opcode := opcode_longlive;
-                    dst := dst_longlive;
-                    src := src_longlive;
-                    dst_content := dst_content_longlive;
-                    src_content := src_content_longlive;
+                    opcode := opcode_contd;
+                    dst := dst_contd;
+                    src := src_contd;
+                    dst_content := dst_content_contd;
+                    src_content := src_content_contd;
 
                     case opcode is
-                        -- ldi: load imm into dst. (suite)
+                        -- mvi: put imm into dst
                         when "000000" =>
-                            regs(to_integer(unsigned(dst_longlive))) <= MEM_OUT;
+                            regs(to_integer(unsigned(dst))) <= MEM_OUT;
 
                             ip <= ip + 2;
-
                             state <= FETCH;
-                            -- END ldi
-                        
-                        -- ld: load [src] into dst. (suite)
-                        when "000010" =>
+                           
+                        -- ldr: load [src] into dst
+                        when "000011" =>
                             regs(to_integer(unsigned(dst))) <= MEM_OUT;
 
                             ip <= ip + 1;
-
                             state <= FETCH;
-                            -- END ld
-                        
-                        -- mul: put dst*src into d:dst ()
-                        when "000101" =>
-                            regs(to_integer(unsigned(dst))) <= multmp(15 downto 0);
-                            regs(3) <= multmp(31 downto 16);
-
-                            ip <= ip + 1;
-
-                            state <= FETCH;
-                            -- END mul
-                        
-                        -- jmp: contd for immediate
-                        when "000110" =>
-                            ip <= MEM_OUT;
-                            state <= FETCH;
-                    
-                        -- sti
-                        when "001100" =>
+                            
+                        -- sti: stores src into [imm]
+                        when "000100" =>
                             MEM_ADDR <= MEM_OUT;
-                            MEM_IN <= dst_content;
+                            MEM_IN <= src_content;
                             MEM_WE <= '1';
 
                             ip <= ip + 2;
                             state_after_idle <= FETCH;
                             state <= IDLE;
+                     
+                        -- jmp: contd for immediate
+                        when "010001" =>
+                            ip <= MEM_OUT;
+                            state <= FETCH;               
 
-                        -- pshi: push immediate
+                        -- psi: push immediate
                         when "010010" =>
                             MEM_ADDR <= regs(7);
                             MEM_IN <= MEM_OUT;
@@ -456,7 +455,7 @@ begin
                         
                         when others => null; -- to compile
                     end case;
-            end case;     
+            end case;
         end if;
     end process;
 end mannerisms ; -- mannerisms
