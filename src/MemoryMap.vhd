@@ -9,10 +9,6 @@ entity MemoryMap is port(
     CPU_MEM_OUT : out   std_logic_vector(15 downto 0);
     CPU_WE      : in    std_logic;
 
-    -- ROM Port
-    ROM_ADDR    : out   std_logic_vector(10 downto 0);
-    ROM_OUT     : in    std_logic_vector(15 downto 0);
-
     -- VRAM Port
     VRAM_ADDR   : out   std_logic_vector(12 downto 0);
     VRAM_WE     : out   std_logic;
@@ -33,7 +29,6 @@ architecture behavior of MemoryMap is
     signal tmp_cram_addr : std_logic_vector(15 downto 0);
 begin
 
-ROM_ADDR <= CPU_ADDR(10 downto 0);
 
 tmp_vram_addr <= CPU_ADDR - X"0800";
 tmp_cram_addr <= CPU_ADDR - X"2000";
@@ -41,8 +36,7 @@ tmp_cram_addr <= CPU_ADDR - X"2000";
 VRAM_ADDR <= tmp_vram_addr(12 downto 0);
 CRAM_ADDR <= tmp_cram_addr(9 downto 0);
 
-CPU_MEM_OUT <=  ROM_OUT when (CPU_ADDR(15 downto 11) = "00000") else
-                RAM_OUT;
+CPU_MEM_OUT <= RAM_OUT;
 
 wes <=  "000" when (CPU_WE = '0') else
         "001" when ((CPU_ADDR(15 downto 11) >= "00001") and (CPU_ADDR(15 downto 11) < "00100")) else

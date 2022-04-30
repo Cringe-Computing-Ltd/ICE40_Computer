@@ -8,7 +8,7 @@ module ice_spram(
 
 SB_SPRAM256KA spram (
     .ADDRESS(ram_addr),
-    .DATAIN(ram_in),
+    .DATAIN(ram_data_in),
     .MASKWREN({ram_we, ram_we, ram_we, ram_we}),
     .WREN(ram_we),
     .CHIPSELECT(1'b1),
@@ -16,7 +16,7 @@ SB_SPRAM256KA spram (
     .STANDBY(1'b0),
     .SLEEP(1'b0),
     .POWEROFF(1'b1),
-    .DATAOUT(ram_out)
+    .DATAOUT(ram_data_out)
 );
     
 endmodule
