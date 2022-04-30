@@ -50,8 +50,8 @@ begin
         variable carrier_tmp : std_logic_vector(16 downto 0);
         -- mult_tmp: contains the full result of a multiplication
         variable mult_tmp : std_logic_vector(31 downto 0) := X"00000000";
-	-- tmp
-	variable tmp : std_logic_vector(15 downto 0);
+        -- tmp
+        variable tmp : std_logic_vector(15 downto 0);
 
         variable opcode : std_logic_vector(5 downto 0);
         variable src : std_logic_vector(4 downto 0);
@@ -108,7 +108,7 @@ begin
                             
                         -- mvr: move src into dst
                         when "000001" =>
-			    regs(to_integer(unsigned(dst))) <= src_content;
+                            regs(to_integer(unsigned(dst))) <= src_content;
 
                             ip <= ip + 1;
                             state <= FETCH;
@@ -154,11 +154,11 @@ begin
                             regs(to_integer(unsigned(dst))) <= carrier_tmp(15 downto 0);
 
                             -- flags
-			    if (carrier_tmp(15 downto 0) = X"0000") then
-				flags(0) <= '1';
-			    else
-				flags(0) <= '0';
-			    end if;
+                            if (carrier_tmp(15 downto 0) = X"0000") then
+                                flags(0) <= '1';
+                            else
+                                flags(0) <= '0';
+                            end if;
                             flags(1) <= carrier_tmp(15);
                             flags(2) <= carrier_tmp(16);
 
@@ -173,12 +173,12 @@ begin
                             regs(to_integer(unsigned(dst))) <= carrier_tmp(15 downto 0);
 
                             -- flags
-			    if (carrier_tmp(15 downto 0) = X"0000") then
-				flags(0) <= '1';
-			    else
-				flags(1) <= '0';
-			    end if;
-			    flags(1) <= carrier_tmp(15);
+                            if (carrier_tmp(15 downto 0) = X"0000") then
+                                flags(0) <= '1';
+                            else
+                                flags(1) <= '0';
+                            end if;
+                            flags(1) <= carrier_tmp(15);
                             flags(2) <= carrier_tmp(16);
                             
                             ip <= ip + 1;
@@ -206,15 +206,15 @@ begin
                             regs(to_integer(unsigned(dst))) <= mult_tmp(15 downto 0);
                             regs(3) <= mult_tmp(31 downto 16);
 
-			    -- TODO: fill flags correctly
-			    flags <= X"0";
+                            -- TODO: fill flags correctly
+                            flags <= X"0";
 
                             ip <= ip + 1;
                             state <= FETCH;
 
                             
                         -- inc: increment dst
-		        -- note: temporarily doesn't update flags
+                        -- note: temporarily doesn't update flags
                         when "001010" =>
                             tmp := dst_content + X"0001";
 
@@ -224,65 +224,65 @@ begin
                             state <= FETCH;
                         
                         -- dec: decrement dst
-			-- note: temporarily only updates zf
+                        -- note: temporarily only updates zf
                         when "001011" =>
-			    tmp := dst_content - X"0001";
+                            tmp := dst_content - X"0001";
 
                             regs(to_integer(unsigned(dst))) <= tmp;
 
-			    if (tmp = X"0000") then
-				flags(0) <= '1';
-			    else
-				flags(0) <= '0';
-			    end if;
+                            if (tmp = X"0000") then
+                                flags(0) <= '1';
+                            else
+                                flags(0) <= '0';
+                            end if;
 
                             ip <= ip + 1;
                             state <= FETCH;
                             
                         -- xor: dst = dst xor b
                         when "001100" =>
-			    tmp := dst_content xor src_content;
+                            tmp := dst_content xor src_content;
                             regs(to_integer(unsigned(dst))) <= tmp;
 
-			    if (tmp = X"0000") then
-				flags(0) <= '1';
-			    else
-				flags(0) <= '0';
-			    end if;
-			    flags(1) <= tmp(15);
-			    flags(2) <= '0';
+                            if (tmp = X"0000") then
+                                flags(0) <= '1';
+                            else
+                                flags(0) <= '0';
+                            end if;
+                                flags(1) <= tmp(15);
+                            flags(2) <= '0';
 
                             ip <= ip + 1;
                             state <= FETCH;
                         
                         -- and: dst = dst and src
                         when "001101" =>
-			    tmp := dst_content and src_content;
+                            tmp := dst_content and src_content;
                             regs(to_integer(unsigned(dst))) <= tmp;
 
-			    if (tmp = X"0000") then
-				flags(0) <= '1';
-			    else
-				flags(0) <= '0';
-			    end if;
-			    flags(1) <= tmp(15);
-			    flags(2) <= '0';
+                            if (tmp = X"0000") then
+                                flags(0) <= '1';
+                            else
+                                flags(0) <= '0';
+                            end if;
+                            flags(1) <= tmp(15);
+                            flags(2) <= '0';
 
                             ip <= ip + 1;
                             state <= FETCH;
 
                         -- or: dst = dst or src
                         when "001110" =>
-			    tmp := dst_content or src_content;
+                            tmp := dst_content or src_content;
                             regs(to_integer(unsigned(dst))) <= tmp;
 
-			    if (tmp = X"0000") then
-				flags(0) <= '1';
-			    else
-				flags(0) <= '0';
-			    end if;
-			    flags(1) <= tmp(15);
-			    flags(2) <= '0';
+                            if (tmp = X"0000") then
+                                flags(0) <= '1';
+                            else
+                                flags(0) <= '0';
+                            end if;
+                            flags(1) <= tmp(15);
+                            flags(2) <= '0';
 
                             ip <= ip + 1;
                             state <= FETCH;
