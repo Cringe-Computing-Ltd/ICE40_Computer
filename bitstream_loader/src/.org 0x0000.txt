@@ -1,0 +1,40 @@
+.org 0x0000
+start:
+    ldi r0, 0xF148
+    sti 0x0800, r0
+
+    ldi r0, 0xF165
+    sti 0x0801, r0
+
+    ldi r0, 0xF16C
+    sti 0x0802, r0
+
+    ldi r0, 0xF16C
+    sti 0x0803, r0
+
+    ldi r0, 0xF16F
+    sti 0x0804, r0
+
+    ldi r0, 0xF120
+    sti 0x0805, r0
+
+    ldi r0, 0xF157
+    sti 0x0806, r0
+
+    ldi r0, 0xF16F
+    sti 0x0807, r0
+
+    ldi r0, 0xF172
+    sti 0x0808, r0
+
+    ldi r0, 0xF16C
+    sti 0x0809, r0
+
+    ldi r0, 0xF164
+    sti 0x080A, r0
+
+    ldi r0, 0xF121
+    sti 0x080B, r0
+
+end:
+    jmp end
