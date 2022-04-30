@@ -17,10 +17,13 @@ entity ICE40_CPU is port(
 end entity;
 
 architecture mannerisms of ICE40_CPU is
+    -- Custom types used
+    type EXEC_STATES_T  is (FETCH, IDLE, EXEC, CONTD);
+    type REGS_T         is array (7 downto 0) of std_logic_vector(15 downto 0);
+
     -- CPU micro-state
-    type EXEC_STATES is (FETCH, IDLE, EXEC, CONTD);
-    signal state                :   EXEC_STATES                     := FETCH;
-    signal state_after_idle     :   EXEC_STATES                     := FETCH;
+    signal state                :   EXEC_STATES_T                   := FETCH;
+    signal state_after_idle     :   EXEC_STATES_T                   := FETCH;
     
     -- Saved values for subsequent instruction cycles
     signal opcode_contd         :   std_logic_vector(5 downto 0)    := "000000";
@@ -31,14 +34,13 @@ architecture mannerisms of ICE40_CPU is
     signal src_content_contd    :   std_logic_vector(15 downto 0)   := "0000000000000000";
 
     -- General purpose registers
-    type REGS_T is array (7 downto 0) of std_logic_vector(15 downto 0);
-    signal regs : REGS_T := (others => "0000000000000000");
+    signal regs                 :   REGS_T                          := (others => "0000000000000000");
 
     -- Flags [zf, sf, cf, Pizza]
-    signal flags : std_logic_vector(3 downto 0) := "0000";
+    signal flags                :   std_logic_vector(3 downto 0)    := "0000";
 
     -- Instruction pointer
-    signal ip : std_logic_vector(15 downto 0) := "0000000000000000";
+    signal ip                   :   std_logic_vector(15 downto 0)   := "0000000000000000";
 
 begin
     -- insert mem things
