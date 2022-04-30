@@ -28,19 +28,19 @@ architecture mannerisms of ICE40_CPU is
     -- Saved values for subsequent instruction cycles
     signal opcode_contd         :   std_logic_vector(5 downto 0)    := "000000";
     signal dst_contd            :   std_logic_vector(4 downto 0)    := "00000";
-    signal src_contd            :   std_logic_vector (4 downto 0)   := "00000";
+    signal src_contd            :   std_logic_vector(4 downto 0)    := "00000";
     -- todo: get rid of these
-    signal dst_content_contd    :   std_logic_vector(15 downto 0)   := "0000000000000000";
-    signal src_content_contd    :   std_logic_vector(15 downto 0)   := "0000000000000000";
+    signal dst_content_contd    :   std_logic_vector(15 downto 0)   := X"0000";
+    signal src_content_contd    :   std_logic_vector(15 downto 0)   := X"0000";
 
     -- General purpose registers
-    signal regs                 :   REGS_T                          := (others => "0000000000000000");
+    signal regs                 :   REGS_T                          := (others => X"0000");
 
     -- Flags [zf, sf, cf, Pizza]
-    signal flags                :   std_logic_vector(3 downto 0)    := "0000";
+    signal flags                :   std_logic_vector(3 downto 0)    := X"0";
 
     -- Instruction pointer
-    signal ip                   :   std_logic_vector(15 downto 0)   := "0000000000000000";
+    signal ip                   :   std_logic_vector(15 downto 0)   := X"0000";
 
 begin
     -- insert mem things

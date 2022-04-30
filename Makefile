@@ -1,7 +1,7 @@
 # Config
 DESIGN_NAME = ICE40_Computer
 PINOUT = config/pinout.pcf
-NEXTPNR_ARGS = --up5k --package sg48 --freq 13
+NEXTPNR_ARGS = --up5k --package sg48 --freq 12.5875
 PICO_SDK_PATH ?= /home/ryzerth/pico-sdk
 
 # Tools
