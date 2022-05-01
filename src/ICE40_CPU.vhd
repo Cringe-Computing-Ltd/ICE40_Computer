@@ -396,6 +396,15 @@ begin
                         when "010101" =>
                             state <= FETCH;
 
+                        -- ret: return using IP from stack
+                        when "010110" =>
+                            MEM_ADDR <= regs(7);
+
+                            regs(7) <= regs(7) + 1;
+                            
+                            state_after_idle <= CONTD;
+                            state <= IDLE;
+
                         when others => null; -- to compile
                     end case;
 
@@ -452,6 +461,11 @@ begin
                             regs(to_integer(unsigned(dst))) <= MEM_OUT;
 
                             ip <= ip + 1;
+                            state <= FETCH;
+
+                        -- ret: return using IP from the stack
+                        when "010110" =>
+                            ip <= MEM_OUT;
                             state <= FETCH;
                         
                         when others => null; -- to compile
