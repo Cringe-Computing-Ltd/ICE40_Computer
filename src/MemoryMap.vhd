@@ -30,8 +30,8 @@ architecture behavior of MemoryMap is
 begin
 
 
-tmp_vram_addr <= CPU_ADDR - X"0800";
-tmp_cram_addr <= CPU_ADDR - X"2000";
+tmp_vram_addr <= CPU_ADDR - X"E000";
+tmp_cram_addr <= CPU_ADDR - X"F800";
 
 VRAM_ADDR <= tmp_vram_addr(12 downto 0);
 CRAM_ADDR <= tmp_cram_addr(9 downto 0);
@@ -39,8 +39,8 @@ CRAM_ADDR <= tmp_cram_addr(9 downto 0);
 CPU_MEM_OUT <= RAM_OUT;
 
 wes <=  "000" when (CPU_WE = '0') else
-        "001" when ((CPU_ADDR(15 downto 11) >= "00001") and (CPU_ADDR(15 downto 11) < "00100")) else
-        "010" when (CPU_ADDR(15 downto 11) = "00100") else
+        "001" when ((CPU_ADDR(15 downto 11) >= "11100") and (CPU_ADDR(15 downto 11) < "11111")) else
+        "010" when (CPU_ADDR(15 downto 11) = "11111") else
         "100";
 
 VRAM_WE <= wes(0);

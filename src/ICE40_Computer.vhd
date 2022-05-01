@@ -233,8 +233,7 @@ begin
 
     leds <= not (CPU_HALT & SW(1 downto 0));
 
-    -- Note: should be stable up to cnt(1)
-    CPU_CLK <= cnt(2);
+    CPU_CLK <= cnt(1);
 
     process(CLK_25_175) begin
         if(rising_edge(CLK_25_175)) then

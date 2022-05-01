@@ -290,14 +290,14 @@ begin
                       
                         -- shl: shift left
                         when "001111" => 
-                            regs(to_integer(unsigned(dst))) <= std_logic_vector(shift_left(unsigned(dst_content), to_integer(unsigned(src_content))));
+                            regs(to_integer(unsigned(dst))) <= std_logic_vector(shift_left(unsigned(dst_content), to_integer(unsigned(src))));
 
                             ip <= ip + 1;
                             state <= FETCH;
 
                         -- shr: shift right
                         when "010000" =>
-                            regs(to_integer(unsigned(dst))) <= std_logic_vector(shift_right(unsigned(dst_content), to_integer(unsigned(src_content))));
+                            regs(to_integer(unsigned(dst))) <= std_logic_vector(shift_right(unsigned(dst_content), to_integer(unsigned(src))));
 
                             ip <= ip + 1;
                             state <= FETCH;

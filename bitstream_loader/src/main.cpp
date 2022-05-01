@@ -4,6 +4,7 @@
 #include "../../build/bitstream.h"
 #include "debug.h"
 #include "font.h"
+#include "rom.h"
 
 int main() {
     stdio_init_all();
@@ -32,39 +33,18 @@ int main() {
     // Initialize debugger
     debug::init();
 
-    // Load font
-    for (int i = 0; i < 128; i++) {
-        debug::poke(0x2000 + (i * 4), (font8x8_basic[i][1] << 8) | font8x8_basic[i][0]);
-        debug::poke(0x2000 + (i * 4) + 1, (font8x8_basic[i][3] << 8) | font8x8_basic[i][2]);
-        debug::poke(0x2000 + (i * 4) + 2, (font8x8_basic[i][5] << 8) | font8x8_basic[i][4]);
-        debug::poke(0x2000 + (i * 4) + 3, (font8x8_basic[i][7] << 8) | font8x8_basic[i][6]);
+    // Load ROM
+    for (int i = 0; i < rom_bin_len; i++) {
+        debug::poke(i, rom_bin[i]);
     }
 
-    debug::poke(0x0000, 0x0000);
-    debug::poke(0x0001, 0x0800);
-    debug::poke(0x0002, 0x0040);
-    debug::poke(0x0003, 0x0200);
-    debug::poke(0x0004, 0x0080);
-    debug::poke(0x0005, 0x00FF);
-    debug::poke(0x0006, 0x00C0);
-    debug::poke(0x0007, 0x1AC0);
-    debug::poke(0x0008, 0x294C);
-    debug::poke(0x0009, 0x2901);
-    debug::poke(0x000A, 0x110D);
-    debug::poke(0x000B, 0x090E);
-    debug::poke(0x000C, 0x2005);
-    debug::poke(0x000D, 0x000A);
-    debug::poke(0x000E, 0x014A);
-    debug::poke(0x000F, 0x1808);
-    debug::poke(0x0010, 0xA011);
-    debug::poke(0x0011, 0x0014);
-    debug::poke(0x0012, 0x0000);
-    debug::poke(0x0013, 0x0800);
-    debug::poke(0x0014, 0x8011);
-    debug::poke(0x0015, 0x0009);
-    debug::poke(0x0016, 0x0000);
-    debug::poke(0x0017, 0x0042);
-    debug::poke(0x0018, 0x0015);
+    // Load font
+    for (int i = 0; i < 128; i++) {
+        debug::poke(0xF800 + (i * 4), (font8x8_basic[i][1] << 8) | font8x8_basic[i][0]);
+        debug::poke(0xF800 + (i * 4) + 1, (font8x8_basic[i][3] << 8) | font8x8_basic[i][2]);
+        debug::poke(0xF800 + (i * 4) + 2, (font8x8_basic[i][5] << 8) | font8x8_basic[i][4]);
+        debug::poke(0xF800 + (i * 4) + 3, (font8x8_basic[i][7] << 8) | font8x8_basic[i][6]);
+    }
 
     // Lets go
     sleep_ms(100);

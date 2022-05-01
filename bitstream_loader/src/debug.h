@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-#define DEBUG_BAUDRATE  128000
+#define DEBUG_BAUDRATE  256000
 
 // Comm pins
 #define DEBUG_CLK       18
