@@ -18,7 +18,7 @@ end entity;
 
 architecture mannerisms of ICE40_CPU is
     -- Custom types used
-    type EXEC_STATES_T  is (FETCH, IDLE, EXEC, CONTD);
+    type EXEC_STATES_T  is (FETCH, IDLE, EXEC, CONTD, CONTD2);
     type REGS_T         is array (7 downto 0) of std_logic_vector(15 downto 0);
 
     -- CPU micro-state
@@ -405,6 +405,12 @@ begin
                             state_after_idle <= CONTD;
                             state <= IDLE;
 
+                        -- ldi: puts [imm] in dst
+                        when "010111" =>
+                            MEM_ADDR <= ip + 1;
+
+                            state_after_idle <= CONTD;
+                            state <= IDLE;
                         when others => null; -- to compile
                     end case;
 
@@ -468,8 +474,30 @@ begin
                             ip <= MEM_OUT;
                             state <= FETCH;
                         
+                        -- ldi: puts [imm] in dst
+                        when "010111" =>
+                            MEM_ADDR <= MEM_OUT;
+
+                            state_after_idle <= CONTD2;
+                            state <= IDLE;
                         when others => null; -- to compile
                     end case;
+	
+            when CONTD2 =>
+	            opcode := opcode_contd;
+	            dst := dst_contd;
+	            dst_content := dst_content_contd;
+
+                case opcode is
+                    -- ldi: puts [imm] in dst
+                    when "010111" =>
+                        regs(to_integer(unsigned(dst))) <= MEM_OUT;
+
+                        ip <= ip + 2;
+                        state <= FETCH;
+                    when others => null;
+                end case;
+		    
             end case;
         end if;
     end process;
