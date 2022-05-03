@@ -114,7 +114,7 @@ begin
                             ip <= ip + 1;
                             state <= FETCH;
                         
-                         -- xcg: exchange dst and src
+                         -- xch: exchange dst and src
                         when "000010" =>
                             regs(to_integer(unsigned(src))) <= dst_content;
                             regs(to_integer(unsigned(dst))) <= src_content;
