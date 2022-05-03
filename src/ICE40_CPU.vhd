@@ -411,7 +411,28 @@ begin
 
                             state_after_idle <= CONTD;
                             state <= IDLE;
-                        when others => null; -- to compile
+
+                        -- call: puts ip + 1 on the stack, jumps to location
+                        when "011000" =>
+                            MEM_ADDR <= regs(7) - 1;
+                            MEM_WE <= '1';
+
+                            regs(7) <= regs(7) - 1;
+
+                            if (src(4) = '1') then
+                                MEM_IN <= ip + 2;
+
+                                state_after_idle <= CONTD;
+                            else
+                                MEM_IN <= ip + 1;
+
+                                ip <= dst_content;
+                                state_after_idle <= FETCH;
+                            end if;
+
+                            state <= IDLE;
+                            
+                    when others => null; -- to compile
                     end case;
 
                 when CONTD =>
@@ -480,24 +501,39 @@ begin
 
                             state_after_idle <= CONTD2;
                             state <= IDLE;
+
+                        -- call: puts ip + 1 on the stack, jumps to location
+                        when "011000" =>
+                            -- if here, immediate value jump
+                            MEM_ADDR <= ip + 1;
+
+                            state_after_idle <= CONTD2;
+                            state <= IDLE;
+
                         when others => null; -- to compile
                     end case;
 	
-            when CONTD2 =>
-	            opcode := opcode_contd;
-	            dst := dst_contd;
-	            dst_content := dst_content_contd;
+                when CONTD2 =>
+                    opcode := opcode_contd;
+                    dst := dst_contd;
+                    dst_content := dst_content_contd;
 
-                case opcode is
-                    -- ldi: puts [imm] in dst
-                    when "010111" =>
-                        regs(to_integer(unsigned(dst))) <= MEM_OUT;
+                    case opcode is
+                        -- ldi: puts [imm] in dst
+                        when "010111" =>
+                            regs(to_integer(unsigned(dst))) <= MEM_OUT;
 
-                        ip <= ip + 2;
-                        state <= FETCH;
-                    when others => null;
-                end case;
-		    
+                            ip <= ip + 2;
+                            state <= FETCH;
+
+                        -- call: puts ip + 1 on the stack, jumps to location
+                        when "011000" =>
+                            -- if here, immediate value jump
+                            ip <= MEM_OUT;
+                            state <= FETCH;
+
+                        when others => null;
+                    end case;
             end case;
         end if;
     end process;
