@@ -15,7 +15,7 @@ entity CRAM is port(
     w_addr	: in	std_logic_vector(9 downto 0);
     w_data	: in	std_logic_vector(15 downto 0)
 );
-end entity CRAM;
+end entity;
 
 architecture behavior of CRAM is
 	-- Block RAM Declaration
@@ -31,7 +31,7 @@ architecture behavior of CRAM is
 		waddr	: in	std_logic_vector(7 downto 0);
 		wdata	: in	std_logic_vector(15 downto 0)
 	);
-	end component ice_bram;
+	end component;
 
     -- Wiring
     signal bram0_rdata  : std_logic_vector(15 downto 0);
@@ -67,4 +67,4 @@ begin
                 "1000" when (w_addr(9 downto 8) = "11") else
                 "0000";
 
-end architecture behavior;
+end architecture;

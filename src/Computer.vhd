@@ -4,7 +4,7 @@ use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
 entity Computer is port(
-    CLK_100	: in	std_logic;
+    CLK_50	: in	std_logic;
 
     -- LEDs
     leds : out std_logic_vector(2 downto 0);
@@ -18,14 +18,18 @@ entity Computer is port(
     SW : in std_logic_vector(7 downto 0);
 
     SEG_A : out std_logic_vector(6 downto 0);
-    SEG_B : out std_logic_vector(6 downto 0)
+    SEG_B : out std_logic_vector(6 downto 0);
+
+    -- PS/2 Keyboard
+    PS2_CLK     :   std_logic;
+    PS2_DATA    :   std_logic
 );
-end entity Computer;
+end entity;
 
 architecture behavior of Computer is
     component VGA_GEN is port(
         -- Clock input
-        CLK_100	        : in    std_logic;
+        CLK_50	        : in    std_logic;
 
         -- VGA Signals
         VGA_OUT         : out   std_logic_vector(2 downto 0);
@@ -49,6 +53,16 @@ architecture behavior of Computer is
     );
     end component;
 
+    component PS2Driver is port(
+        PS2_CLK     :   in  std_logic;
+        PS2_DATA    :   in  std_logic;
+
+        BUF_R_CLK   :   in  std_logic;
+        BUF_R_ADDR  :   in  std_logic_vector(7 downto 0);
+        BUF_R_DATA  :   out std_logic_vector(15 downto 0)
+    );
+    end component;
+
     component CPU is port(
         CLK         : in std_logic;
         MEM_ADDR    : out std_logic_vector(15 downto 0);
@@ -56,6 +70,7 @@ architecture behavior of Computer is
         MEM_OUT     : in std_logic_vector(15 downto 0);
         MEM_WE      : out std_logic;
         HALT        : in  std_logic;
+        INTERRUPT   : in  std_logic;
         DEBUG_OUT   : out std_logic_vector(7 downto 0)
     );
     end component;
@@ -93,6 +108,10 @@ architecture behavior of Computer is
         -- CRAM Port
         CRAM_ADDR   : out   std_logic_vector(9 downto 0);
         CRAM_WE     : out   std_logic;
+
+        -- PS/2 Buffer
+        PS2_ADDR    : out   std_logic_vector(7 downto 0);
+        PS2_DATA    : in    std_logic_vector(15 downto 0);
 
         -- RAM Port
         RAM_OUT     : in    std_logic_vector(15 downto 0);
@@ -143,6 +162,8 @@ architecture behavior of Computer is
     signal MAP_MEM_OUT  : std_logic_vector(15 downto 0);
     signal MAP_MEM_WE   : std_logic;
 
+    signal PS2_BUF_ADDR : std_logic_vector(7 downto 0);
+    signal PS2_BUF_DATA : std_logic_vector(15 downto 0);
     signal CPU_CLK      : std_logic;
 
     signal startup_counter  : std_logic_vector(31 downto 0) := X"00000000";
@@ -150,9 +171,11 @@ architecture behavior of Computer is
 
     signal CPU_DEBUG_OUT  : std_logic_vector(7 downto 0);
 
+    signal INV_PS2_CLK    : std_logic;
+
 begin
     RTX_3090ti : VGA_GEN port map(
-        CLK_100         => CLK_100,
+        CLK_50         => CLK_50,
         CLK_25_175_OUT  => CLK_25_175,
         VGA_OUT         => VGA_OUT,
         VGA_HS          => VGA_HS,
@@ -174,6 +197,7 @@ begin
         MEM_OUT     => MAP_MEM_OUT,
         MEM_WE      => CPU_MEM_WE,
         HALT        => CPU_HALT,
+        INTERRUPT   => '0',
         DEBUG_OUT   => CPU_DEBUG_OUT
     );
 
@@ -222,8 +246,21 @@ begin
         VRAM_WE     => VRAM_WE,
         CRAM_ADDR   => CRAM_ADDR,
         CRAM_WE     => CRAM_WE,
+        PS2_ADDR    => PS2_BUF_ADDR,
+        PS2_DATA    => PS2_BUF_DATA,
         RAM_OUT     => RAM_DATA_OUT,
         RAM_WE      => RAM_WE
+    );
+
+    INV_PS2_CLK <= not PS2_CLK;
+
+    typewriter : PS2Driver port map(
+        PS2_CLK     => INV_PS2_CLK,
+        PS2_DATA    => PS2_DATA,
+
+        BUF_R_CLK   => CPU_CLK,
+        BUF_R_ADDR  => PS2_BUF_ADDR,
+        BUF_R_DATA  => PS2_BUF_DATA
     );
 
     -- leds <= "110" when (cnt(24 downto 23) = "00") else
@@ -231,7 +268,7 @@ begin
     --         "011" when (cnt(24 downto 23) = "10") else
     --         "101";
 
-    leds <= not (CPU_HALT & SW(1 downto 0));
+    leds <= not ((not PS2_CLK) & SW(1 downto 0));
 
     CPU_CLK <= cnt(1);
 
@@ -246,4 +283,4 @@ begin
         end if;
     end process;
     
-end behavior;
+end architecture;

@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 
 entity VGA_GEN is port(
     -- Clock input
-	CLK_100	        : in    std_logic;
+	CLK_50	        : in    std_logic;
 
     -- VGA Signals
 	VGA_OUT         : out   std_logic_vector(2 downto 0);
@@ -35,7 +35,7 @@ architecture behavior of VGA_GEN is
         clk_in : in std_logic;
         clk_out : out std_logic
     ); 
-    end component ice_pll;
+    end component;
 
     -- Define VRAM
     component VRAM is port(
@@ -102,7 +102,7 @@ architecture behavior of VGA_GEN is
 begin
     -- Instantiate PLL to generate the 25.175MHz pixel clock
     VGA_PLL : ice_pll port map (
-        clk_in => CLK_100,
+        clk_in => CLK_50,
         clk_out => CLK_25_175
     );
 
@@ -244,5 +244,4 @@ begin
             end if;
         end if;
     end process;
-
-end behavior;
+end architecture;

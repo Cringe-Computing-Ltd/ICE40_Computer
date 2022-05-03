@@ -2,7 +2,7 @@
 
 # µFlake board pin definitions
 
-set_io CLK_100 20
+set_io CLK_50       20
 
 set_io SW[0]        13
 set_io SW[1]        12
@@ -25,9 +25,9 @@ set_io VGA_OUT[2]   25
 set_io PS2_CLK      31
 set_io PS2_DATA     28
 
-set_io leds[0]       39
-set_io leds[1]       40
-set_io leds[2]       41
+set_io leds[0]      39
+set_io leds[1]      40
+set_io leds[2]      41
 
 set_io SEG_A[0]     32
 set_io SEG_A[1]     34

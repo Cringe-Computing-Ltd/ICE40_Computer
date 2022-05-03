@@ -15,7 +15,7 @@ entity VRAM is port(
     w_addr	: in	std_logic_vector(12 downto 0);
     w_data	: in	std_logic_vector(15 downto 0)
 );
-end entity VRAM;
+end entity;
 
 architecture behavior of VRAM is
 	-- Block RAM Declaration
@@ -31,7 +31,7 @@ architecture behavior of VRAM is
 		waddr	: in	std_logic_vector(7 downto 0);
 		wdata	: in	std_logic_vector(15 downto 0)
 	);
-	end component ice_bram;
+	end component;
 
     -- Wiring
     signal bram0_rdata  : std_logic_vector(15 downto 0);
@@ -123,4 +123,4 @@ begin
                 "1000000000000000000" when (w_addr(12 downto 8) = "10010") else
                 "0000000000000000000";
 
-end architecture behavior;
+end architecture;

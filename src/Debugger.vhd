@@ -32,7 +32,7 @@ entity Debugger is port(
     CPU_MEM_WE      : in    std_logic;
     CPU_HALT        : out   std_logic := '1'
 );
-end entity Debugger;
+end entity;
 
 architecture behavior of Debugger is
     -- Config
@@ -84,7 +84,9 @@ begin
                 DEB_MEM_WE <= '0';
                 
             else
+                -- TODO: Delete this if the next one works
                 NEW_SPI_WORD := std_logic_vector(shift_left(unsigned(SPI_WORD), 1)) or ("000000000000000" & SPI_DATA);
+                -- NEW_SPI_WORD := SPI_WORD(14 downto 0) & SPI_DATA;
                 SPI_WORD <= NEW_SPI_WORD;
 
                 case (N_WORD) is
@@ -124,5 +126,4 @@ begin
             end if;
         end if;
     end process;
-
-end behavior;
+end;

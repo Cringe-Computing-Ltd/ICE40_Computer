@@ -11,6 +11,7 @@ entity CPU is port(
     MEM_OUT     : in    std_logic_vector(15 downto 0);
     MEM_WE      : out   std_logic;
     HALT        : in    std_logic;
+    INTERRUPT   : in    std_logic;
 
     DEBUG_OUT   : out   std_logic_vector(7 downto 0) := X"00"
 );
@@ -19,7 +20,7 @@ end entity;
 architecture mannerisms of CPU is
     -- Custom types used
     type EXEC_STATES_T  is (FETCH, IDLE, EXEC, CONTD, CONTD2);
-    type REGS_T         is array (7 downto 0) of std_logic_vector(15 downto 0);
+    type REGS_T         is array (15 downto 0) of std_logic_vector(15 downto 0);
 
     -- CPU micro-state
     signal state                :   EXEC_STATES_T                   := FETCH;
@@ -36,11 +37,11 @@ architecture mannerisms of CPU is
     -- General purpose registers
     signal regs                 :   REGS_T                          := (others => X"0000");
 
-    -- Flags [zf, sf, cf, Pizza]
-    signal flags                :   std_logic_vector(3 downto 0)    := X"0";
-
     -- Instruction pointer
     signal ip                   :   std_logic_vector(15 downto 0)   := X"0000";
+
+    -- Interrupt stuff
+    signal last_interrupt       : std_logic := '0';
 
 begin
     -- insert mem things
@@ -64,20 +65,30 @@ begin
 
         variable tmp_content : std_logic_vector(15 downto 0);
         variable jmp_cond_ok : std_logic;
-
-        -- TODO: get rid of this, probably unneeded.
-        variable reload : std_logic := '0';
     begin
         if(rising_edge(CLK)) then
             case state is
                 when FETCH =>
-                    if (HALT = '0') then
+                    if (INTERRUPT = '1' and last_interrupt = '0' and regs(14)(3) = '1') then
+                        MEM_ADDR <= regs(15) - 1;
+                        MEM_WE <= '1';
+                        MEM_IN <= ip;
+    
+                        regs(15) <= regs(15) - 1;
+    
+                        ip <= X"0002";
+    
+                        state_after_idle <= FETCH;
+                        state <= IDLE;
+                    elsif (HALT = '0') then
                         MEM_ADDR <= ip;
                         MEM_WE <= '0';
     
                         state <= IDLE;
                         state_after_idle <= EXEC;
                     end if;
+
+                    last_interrupt <= INTERRUPT;
 
                 when IDLE =>
                     state <= state_after_idle;
@@ -156,12 +167,12 @@ begin
 
                             -- flags
                             if (alu_op_out(15 downto 0) = X"0000") then
-                                flags(0) <= '1';
+                                regs(14)(0) <= '1';
                             else
-                                flags(0) <= '0';
+                                regs(14)(0) <= '0';
                             end if;
-                            flags(1) <= alu_op_out(15);
-                            flags(2) <= alu_op_out(16);
+                            regs(14)(1) <= alu_op_out(15);
+                            regs(14)(2) <= alu_op_out(16);
 
                             ip <= ip + 1;
                             state <= FETCH;
@@ -175,12 +186,12 @@ begin
 
                             -- flags
                             if (alu_op_out(15 downto 0) = X"0000") then
-                                flags(0) <= '1';
+                                regs(14)(0) <= '1';
                             else
-                                flags(1) <= '0';
+                                regs(14)(0) <= '0';
                             end if;
-                            flags(1) <= alu_op_out(15);
-                            flags(2) <= alu_op_out(16);
+                            regs(14)(1) <= alu_op_out(15);
+                            regs(14)(2) <= alu_op_out(16);
                             
                             ip <= ip + 1;
                             state <= FETCH;
@@ -190,12 +201,12 @@ begin
                             alu_op_out := ('0' & dst_content) - ('0' & src_content);
 
                             if (alu_op_out(15 downto 0) = "0000000000000000") then
-                                flags(0) <= '1';
+                                regs(14)(0) <= '1';
                             else
-                                flags(0) <= '0';
+                                regs(14)(0) <= '0';
                             end if;
-                            flags(1) <= alu_op_out(15);
-                            flags(2) <= alu_op_out(16);
+                            regs(14)(1) <= alu_op_out(15);
+                            regs(14)(2) <= alu_op_out(16);
 
                             ip <= ip + 1;
                             state <= FETCH;
@@ -205,10 +216,22 @@ begin
                             mult_tmp := dst_content*src_content;
 
                             regs(to_integer(unsigned(dst))) <= mult_tmp(15 downto 0);
-                            regs(3) <= mult_tmp(31 downto 16);
+                            regs(13) <= mult_tmp(31 downto 16);
 
                             -- TODO: fill flags correctly
-                            flags <= X"0";
+                            if (mult_tmp = X"00000000") then
+                                regs(14)(0) <= '1';
+                            else
+                                regs(14)(0) <= '0';
+                            end if;
+
+                            regs(14)(1) <= mult_tmp(31);
+
+                            if (mult_tmp(31 downto 16) = X"0000") then
+                                regs(14)(2) <= '0';
+                            else
+                                regs(14)(2) <= '1';
+                            end if;
 
                             ip <= ip + 1;
                             state <= FETCH;
@@ -232,9 +255,9 @@ begin
                             regs(to_integer(unsigned(dst))) <= tmp;
 
                             if (tmp = X"0000") then
-                                flags(0) <= '1';
+                                regs(14)(0) <= '1';
                             else
-                                flags(0) <= '0';
+                                regs(14)(0) <= '0';
                             end if;
 
                             ip <= ip + 1;
@@ -246,12 +269,12 @@ begin
                             regs(to_integer(unsigned(dst))) <= tmp;
 
                             if (tmp = X"0000") then
-                                flags(0) <= '1';
+                                regs(14)(0) <= '1';
                             else
-                                flags(0) <= '0';
+                                regs(14)(0) <= '0';
                             end if;
-                                flags(1) <= tmp(15);
-                            flags(2) <= '0';
+                            regs(14)(1) <= tmp(15);
+                            regs(14)(2) <= '0';
 
                             ip <= ip + 1;
                             state <= FETCH;
@@ -262,12 +285,12 @@ begin
                             regs(to_integer(unsigned(dst))) <= tmp;
 
                             if (tmp = X"0000") then
-                                flags(0) <= '1';
+                                regs(14)(0) <= '1';
                             else
-                                flags(0) <= '0';
+                                regs(14)(0) <= '0';
                             end if;
-                            flags(1) <= tmp(15);
-                            flags(2) <= '0';
+                            regs(14)(1) <= tmp(15);
+                            regs(14)(2) <= '0';
 
                             ip <= ip + 1;
                             state <= FETCH;
@@ -278,12 +301,12 @@ begin
                             regs(to_integer(unsigned(dst))) <= tmp;
 
                             if (tmp = X"0000") then
-                                flags(0) <= '1';
+                                regs(14)(0) <= '1';
                             else
-                                flags(0) <= '0';
+                                regs(14)(0) <= '0';
                             end if;
-                            flags(1) <= tmp(15);
-                            flags(2) <= '0';
+                            regs(14)(1) <= tmp(15);
+                            regs(14)(2) <= '0';
 
                             ip <= ip + 1;
                             state <= FETCH;
@@ -310,25 +333,25 @@ begin
                                     jmp_cond_ok := '1';
                                 -- ==
                                 when "1110" =>
-                                    jmp_cond_ok := flags(0);
+                                    jmp_cond_ok := regs(14)(0);
                                 -- !=
                                 when "1111" =>
-                                    jmp_cond_ok := not flags(0);
+                                    jmp_cond_ok := not regs(14)(0);
                                 -- >
                                 when "1000" =>
-                                    jmp_cond_ok := not flags(1) and not flags(0);
+                                    jmp_cond_ok := not regs(14)(1) and not regs(14)(0);
                                 -- >=
                                 when "1001" =>
-                                    jmp_cond_ok := not flags(1);
+                                    jmp_cond_ok := not regs(14)(1);
                                 -- <
                                 when "0100" =>
-                                    jmp_cond_ok := flags(1);
+                                    jmp_cond_ok := regs(14)(1);
                                 -- <=
                                 when "0101" =>
-                                    jmp_cond_ok := flags(1) or flags(0);
+                                    jmp_cond_ok := regs(14)(1) or regs(14)(0);
                                 -- carry
                                 when "0001" =>
-                                    jmp_cond_ok := flags(2);
+                                    jmp_cond_ok := regs(14)(2);
                                 when others => null;
                             end case;
 
@@ -364,7 +387,7 @@ begin
                         -- psi: push immediate
                         when "010010" =>
                             MEM_ADDR <= ip + 1;
-                            regs(7) <= regs(7) - 1;
+                            regs(15) <= regs(15) - 1;
 
                             state_after_idle <= CONTD;
                             state <= IDLE;
@@ -372,12 +395,12 @@ begin
                         -- psh: push dst
                         when "010011" =>
                             -- write dst_content into [rsp - 1]
-                            MEM_ADDR <= regs(7) - 1;
+                            MEM_ADDR <= regs(15) - 1;
                             MEM_IN <= dst_content;
                             MEM_WE <= '1';
 
                             -- decrement dst
-                            regs(7) <= regs(7) - 1;
+                            regs(15) <= regs(15) - 1;
 
                             ip <= ip + 1;
                             state_after_idle <= FETCH;
@@ -385,9 +408,9 @@ begin
 
                         -- pop: pop to dst
                         when "010100" =>
-                            MEM_ADDR <= regs(7);
+                            MEM_ADDR <= regs(15);
 
-                            regs(7) <= regs(7) + 1;
+                            regs(15) <= regs(15) + 1;
                             
                             state_after_idle <= CONTD;
                             state <= IDLE;
@@ -398,9 +421,9 @@ begin
 
                         -- ret: return using IP from stack
                         when "010110" =>
-                            MEM_ADDR <= regs(7);
+                            MEM_ADDR <= regs(15);
 
-                            regs(7) <= regs(7) + 1;
+                            regs(15) <= regs(15) + 1;
                             
                             state_after_idle <= CONTD;
                             state <= IDLE;
@@ -414,10 +437,10 @@ begin
 
                         -- call: puts ip + 1 on the stack, jumps to location
                         when "011000" =>
-                            MEM_ADDR <= regs(7) - 1;
+                            MEM_ADDR <= regs(15) - 1;
                             MEM_WE <= '1';
 
-                            regs(7) <= regs(7) - 1;
+                            regs(15) <= regs(15) - 1;
 
                             if (src(4) = '1') then
                                 MEM_IN <= ip + 2;
@@ -431,7 +454,6 @@ begin
                             end if;
 
                             state <= IDLE;
-                            
                     when others => null; -- to compile
                     end case;
 
@@ -475,7 +497,7 @@ begin
 
                         -- psi: push immediate
                         when "010010" =>
-                            MEM_ADDR <= regs(7);
+                            MEM_ADDR <= regs(15);
                             MEM_IN <= MEM_OUT;
                             MEM_WE <= '1';
 
@@ -506,6 +528,7 @@ begin
                         when "011000" =>
                             -- if here, immediate value jump
                             MEM_ADDR <= ip + 1;
+                            MEM_WE <= '0';
 
                             state_after_idle <= CONTD2;
                             state <= IDLE;
@@ -519,7 +542,7 @@ begin
                     dst_content := dst_content_contd;
 
                     case opcode is
-                        -- ldi: puts [imm] in dst
+                        -- ld: puts [imm] in dst
                         when "010111" =>
                             regs(to_integer(unsigned(dst))) <= MEM_OUT;
 
@@ -537,7 +560,7 @@ begin
             end case;
         end if;
     end process;
-end mannerisms ; -- mannerisms
+end architecture; -- mannerisms
 
 
 

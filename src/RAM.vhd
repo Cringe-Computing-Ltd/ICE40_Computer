@@ -10,7 +10,7 @@ entity RAM is port(
     data_out	: out	std_logic_vector(15 downto 0);
     w_e         : in	std_logic
 );
-end entity RAM;
+end entity;
 
 architecture behavior of RAM is
 	-- Block RAM Declaration
@@ -21,7 +21,7 @@ architecture behavior of RAM is
         ram_data_out    : out	std_logic_vector(15 downto 0);
         ram_we  	    : in	std_logic
 	);
-	end component ice_spram;
+	end component;
 
     -- Wiring
     signal spram0_data_out  : std_logic_vector(15 downto 0);
@@ -53,4 +53,4 @@ begin
                     "1000" when (addr(15 downto 14) = "11") else
                     "0000";
 
-end architecture behavior;
+end architecture;
