@@ -4,7 +4,7 @@ use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
 
-entity ICE40_CPU is port(
+entity CPU is port(
     CLK         : in    std_logic;
     MEM_ADDR    : out   std_logic_vector(15 downto 0);
     MEM_IN      : out   std_logic_vector(15 downto 0);
@@ -16,7 +16,7 @@ entity ICE40_CPU is port(
 );
 end entity;
 
-architecture mannerisms of ICE40_CPU is
+architecture mannerisms of CPU is
     -- Custom types used
     type EXEC_STATES_T  is (FETCH, IDLE, EXEC, CONTD, CONTD2);
     type REGS_T         is array (7 downto 0) of std_logic_vector(15 downto 0);

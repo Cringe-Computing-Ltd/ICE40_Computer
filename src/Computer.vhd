@@ -3,11 +3,11 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
-entity ICE40_Computer is port(
-	CLK_100	: in	std_logic;
+entity Computer is port(
+    CLK_100	: in	std_logic;
 
     -- LEDs
-	leds : out std_logic_vector(2 downto 0);
+    leds : out std_logic_vector(2 downto 0);
 
     -- VGA
     VGA_OUT : out std_logic_vector(2 downto 0);
@@ -20,9 +20,9 @@ entity ICE40_Computer is port(
     SEG_A : out std_logic_vector(6 downto 0);
     SEG_B : out std_logic_vector(6 downto 0)
 );
-end entity ICE40_Computer;
+end entity Computer;
 
-architecture behavior of ICE40_Computer is
+architecture behavior of Computer is
     component VGA_GEN is port(
         -- Clock input
         CLK_100	        : in    std_logic;
@@ -49,7 +49,7 @@ architecture behavior of ICE40_Computer is
     );
     end component;
 
-    component ICE40_CPU is port(
+    component CPU is port(
         CLK         : in std_logic;
         MEM_ADDR    : out std_logic_vector(15 downto 0);
         MEM_IN      : out std_logic_vector(15 downto 0);
@@ -167,7 +167,7 @@ begin
         CRAM_W_DATA     => MAP_MEM_IN
     );
 
-    ThreadRipperPro : ICE40_CPU port map(
+    ThreadRipperPro : CPU port map(
         CLK         => CPU_CLK,
         MEM_ADDR    => CPU_ADDR,
         MEM_IN      => CPU_MEM_IN,

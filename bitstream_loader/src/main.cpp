@@ -22,7 +22,7 @@ int main() {
     sleep_ms(100);
     
     // Configure GPIO
-    fpga::configure(build_ICE40_Computer_bin, build_ICE40_Computer_bin_len);
+    fpga::configure(build_Computer_bin, build_Computer_bin_len);
 
     // Signal end of load by turning on the LED
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
