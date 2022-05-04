@@ -21,8 +21,8 @@ entity Computer is port(
     SEG_B : out std_logic_vector(6 downto 0);
 
     -- PS/2 Keyboard
-    PS2_CLK     :   std_logic;
-    PS2_DATA    :   std_logic
+    PS2_CLK     : in  std_logic;
+    PS2_DATA    : in  std_logic
 );
 end entity;
 
