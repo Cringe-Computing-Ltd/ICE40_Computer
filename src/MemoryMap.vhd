@@ -43,12 +43,12 @@ VRAM_ADDR   <= tmp_vram_addr(12 downto 0);
 CRAM_ADDR   <= tmp_cram_addr(9 downto 0);
 PS2_ADDR    <= tmp_ps2_addr(7 downto 0);
 
-CPU_MEM_OUT <=  PS2_DATA when (CPU_ADDR(15 downto 8) = "11011111") else
+CPU_MEM_OUT <=  PS2_DATA when (CPU_ADDR(15 downto 8) = X"DF") else
                 RAM_OUT;
 
 wes <=  "000" when (CPU_WE = '0') else
-        "001" when ((CPU_ADDR(15 downto 8) >= "11100000") and (CPU_ADDR(15 downto 8) < "11111000")) else
-        "010" when ((CPU_ADDR(15 downto 8) >= "11111000") and (CPU_ADDR(15 downto 8) < "11111100")) else
+        "001" when ((CPU_ADDR(15 downto 8) >= X"E0") and (CPU_ADDR(15 downto 8) < X"F8")) else
+        "010" when ((CPU_ADDR(15 downto 8) >= X"F8") and (CPU_ADDR(15 downto 8) < X"FC")) else
         "100";
 
 VRAM_WE <= wes(0);
