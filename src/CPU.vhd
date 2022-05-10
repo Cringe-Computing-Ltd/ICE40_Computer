@@ -69,7 +69,7 @@ begin
         if(rising_edge(CLK)) then
             case state is
                 when FETCH =>
-                    if (INTERRUPT = '1' and last_interrupt = '0' and regs(14)(3) = '1') then
+                    if (INTERRUPT = '1' and last_interrupt = '0' and regs(14)(4) = '1') then
                         MEM_ADDR <= regs(15) - 1;
                         MEM_WE <= '1';
                         MEM_IN <= ip;
@@ -171,8 +171,18 @@ begin
                             else
                                 regs(14)(0) <= '0';
                             end if;
+
                             regs(14)(1) <= alu_op_out(15);
                             regs(14)(2) <= alu_op_out(16);
+
+                            if ((alu_op_out(15) = '1' and dst_content(15) = '0' and src_content(15) = '0')
+                                    or
+                                    (alu_op_out(15) = '0' and dst_content(15) = '1' and src_content(15) = '1')) then
+                                regs(14)(3) <= '1';
+                            else
+                                regs(14)(3) <= '0';
+                            end if;
+
 
                             ip <= ip + 1;
                             state <= FETCH;
@@ -193,6 +203,14 @@ begin
                             regs(14)(1) <= alu_op_out(15);
                             regs(14)(2) <= alu_op_out(16);
                             
+                            if ((alu_op_out(15) = '1' and dst_content(15) = '0' and src_content(15) = '0')
+                                    or
+                                    (alu_op_out(15) = '0' and dst_content(15) = '1' and src_content(15) = '1')) then
+                                regs(14)(3) <= '1';
+                            else
+                                regs(14)(3) <= '0';
+                            end if;
+
                             ip <= ip + 1;
                             state <= FETCH;
                       
@@ -207,6 +225,14 @@ begin
                             end if;
                             regs(14)(1) <= alu_op_out(15);
                             regs(14)(2) <= alu_op_out(16);
+
+                            if ((alu_op_out(15) = '1' and dst_content(15) = '0' and src_content(15) = '0')
+                                    or
+                                    (alu_op_out(15) = '0' and dst_content(15) = '1' and src_content(15) = '1')) then
+                                regs(14)(3) <= '1';
+                            else
+                                regs(14)(3) <= '0';
+                            end if;
 
                             ip <= ip + 1;
                             state <= FETCH;
@@ -328,30 +354,44 @@ begin
                         -- jmp: jump to dst
                         when "010001" =>
                             case src(3 downto 0) is
+                                -- bit 0: 0 indicates equality
+                                -- bit 1: 0 indicates >
+                                -- bit 2: 0 indicates <
+                                -- bit 3: 0 indicates unsignedness (no regard on sign)
+
                                 -- unconditional
                                 when "0000" =>
                                     jmp_cond_ok := '1';
                                 -- ==
-                                when "1110" =>
+                                when "0110" =>
                                     jmp_cond_ok := regs(14)(0);
                                 -- !=
-                                when "1111" =>
+                                when "0001" =>
                                     jmp_cond_ok := not regs(14)(0);
                                 -- >
-                                when "1000" =>
-                                    jmp_cond_ok := not regs(14)(1) and not regs(14)(0);
+                                when "1101" =>
+                                    jmp_cond_ok := not (regs(14)(1) xor regs(14)(3)) and not regs(14)(0);
                                 -- >=
-                                when "1001" =>
-                                    jmp_cond_ok := not regs(14)(1);
+                                when "1100" =>
+                                    jmp_cond_ok := not (regs(14)(1) xor regs(14)(3));
                                 -- <
-                                when "0100" =>
-                                    jmp_cond_ok := regs(14)(1);
+                                when "1011" =>
+                                    jmp_cond_ok := regs(14)(1) xor regs(14)(3);
                                 -- <=
+                                when "1010" =>
+                                    jmp_cond_ok := (regs(14)(1) xor regs(14)(3)) or regs(14)(0);
+                                -- above
                                 when "0101" =>
-                                    jmp_cond_ok := regs(14)(1) or regs(14)(0);
-                                -- carry
-                                when "0001" =>
+                                    jmp_cond_ok := not regs(14)(2) and not regs(14)(0);
+                                -- above or equal
+                                when "0100" =>
+                                    jmp_cond_ok := not regs(14)(2);
+                                -- below / carry set
+                                when "0011" =>
                                     jmp_cond_ok := regs(14)(2);
+                                -- below or equal
+                                when "0010" =>
+                                    jmp_cond_ok := regs(14)(2) or regs(14)(0);
                                 when others => null;
                             end case;
 
