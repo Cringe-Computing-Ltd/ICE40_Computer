@@ -227,7 +227,7 @@ begin
                         -- cmp: compares dst and src
                         when "001001" =>
                             alu_minus := X"0000" - src_content;
-                            alu_op_out := ('0' & dst_content) - ('0' & alu_minus);
+                            alu_op_out := ('0' & dst_content) + ('0' & alu_minus);
 
                             if (alu_op_out(15 downto 0) = "0000000000000000") then
                                 regs(14)(0) <= '1';
@@ -487,6 +487,7 @@ begin
                                     when others =>
                                         ip <= ip + 2;
                                 end case;
+                                state <= FETCH;
                             end if;
                             
                             -- END jmp
