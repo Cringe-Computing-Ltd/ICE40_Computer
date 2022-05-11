@@ -169,7 +169,7 @@ begin
                         
                         -- add: puts dst+src into dst
                         when "000111" =>
-                            alu_op_out := ('0' & dst_content) + ('0' & src_content);
+                            alu_op_out := (dst_content(15) & dst_content) + (src_content(15) & src_content);
 
                             -- result
                             regs(to_integer(unsigned(dst))) <= alu_op_out(15 downto 0);
@@ -199,7 +199,7 @@ begin
                         -- sub: put dst-src into dst
                         when "001000" =>
                             alu_minus := X"0000" - src_content;
-                            alu_op_out := ('0' & dst_content) + ('0' & alu_minus);
+                            alu_op_out := (dst_content(15) & dst_content) - (src_content(15) & src_content);
 
                             -- result
                             regs(to_integer(unsigned(dst))) <= alu_op_out(15 downto 0);
@@ -227,7 +227,7 @@ begin
                         -- cmp: compares dst and src
                         when "001001" =>
                             alu_minus := X"0000" - src_content;
-                            alu_op_out := ('0' & dst_content) + ('0' & alu_minus);
+                            alu_op_out := (dst_content(15) & dst_content) - (src_content(15) & src_content);
 
                             if (alu_op_out(15 downto 0) = "0000000000000000") then
                                 regs(14)(0) <= '1';
