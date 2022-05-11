@@ -50,6 +50,7 @@ begin
     process(CLK)
         -- alu_op_out: contains the last carry bit to set the flag
         variable alu_op_out : std_logic_vector(16 downto 0);
+	variable alu_minus  : std_logic_vector(15 downto 0);
         -- mult_tmp: contains the full result of a multiplication
         variable mult_tmp : std_logic_vector(31 downto 0) := X"00000000";
         -- tmp
@@ -189,7 +190,8 @@ begin
                         
                         -- sub: put dst-src into dst
                         when "000111" =>
-                            alu_op_out := ('0' & dst_content) - ('0' & src_content);
+                            alu_minus := X"0000" - src_content;
+                            alu_op_out := ('0' & dst_content) + ('0' & alu_minus);
 
                             -- result
                             regs(to_integer(unsigned(dst))) <= alu_op_out(15 downto 0);
@@ -203,9 +205,9 @@ begin
                             regs(14)(1) <= alu_op_out(15);
                             regs(14)(2) <= alu_op_out(16);
                             
-                            if ((alu_op_out(15) = '1' and dst_content(15) = '0' and src_content(15) = '0')
+                            if ((alu_op_out(15) = '1' and dst_content(15) = '0' and alu_minus(15) = '0')
                                     or
-                                    (alu_op_out(15) = '0' and dst_content(15) = '1' and src_content(15) = '1')) then
+                                    (alu_op_out(15) = '0' and dst_content(15) = '1' and alu_minus(15) = '1')) then
                                 regs(14)(3) <= '1';
                             else
                                 regs(14)(3) <= '0';
@@ -216,7 +218,8 @@ begin
                       
                         -- cmp: compares dst and src
                         when "001000" =>
-                            alu_op_out := ('0' & dst_content) - ('0' & src_content);
+                            alu_minus := X"0000" - src_content;
+                            alu_op_out := ('0' & dst_content) + ('0' & alu_minus);
 
                             if (alu_op_out(15 downto 0) = "0000000000000000") then
                                 regs(14)(0) <= '1';
@@ -226,9 +229,9 @@ begin
                             regs(14)(1) <= alu_op_out(15);
                             regs(14)(2) <= alu_op_out(16);
 
-                            if ((alu_op_out(15) = '1' and dst_content(15) = '0' and src_content(15) = '0')
+                            if ((alu_op_out(15) = '1' and dst_content(15) = '0' and alu_minus(15) = '0')
                                     or
-                                    (alu_op_out(15) = '0' and dst_content(15) = '1' and src_content(15) = '1')) then
+                                    (alu_op_out(15) = '0' and dst_content(15) = '1' and alu_minus(15) = '1')) then
                                 regs(14)(3) <= '1';
                             else
                                 regs(14)(3) <= '0';
