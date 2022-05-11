@@ -30,7 +30,6 @@ architecture mannerisms of CPU is
     signal opcode_contd         :   std_logic_vector(5 downto 0)    := "000000";
     signal dst_contd            :   std_logic_vector(4 downto 0)    := "00000";
     signal src_contd            :   std_logic_vector(4 downto 0)    := "00000";
-    -- todo: get rid of these
     signal dst_content_contd    :   std_logic_vector(15 downto 0)   := X"0000";
     signal src_content_contd    :   std_logic_vector(15 downto 0)   := X"0000";
 
@@ -60,7 +59,6 @@ begin
         variable src : std_logic_vector(4 downto 0);
         variable dst : std_logic_vector(4 downto 0);
 
-        -- todo: get rid of these
         variable dst_content : std_logic_vector(15 downto 0);
         variable src_content : std_logic_vector(15 downto 0);
 
@@ -312,7 +310,7 @@ begin
                             regs(to_integer(unsigned(dst))) <= mult_tmp(15 downto 0);
                             regs(13) <= mult_tmp(31 downto 16);
 
-                            -- TODO: fill flags correctly
+                            -- Compute flags
                             if (mult_tmp = X"00000000") then
                                 regs(14)(0) <= '1';
                             else

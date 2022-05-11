@@ -128,7 +128,6 @@ architecture behavior of Computer is
     );
     end component;
 
-    -- TODO: MOVE THIS TO VHDL
     component SevenSegment is port(
         inp	        : in	std_logic_vector(3 downto 0);
         outp	    : out	std_logic_vector(6 downto 0)
